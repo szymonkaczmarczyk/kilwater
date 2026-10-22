@@ -1,5 +1,7 @@
 # Kilwater
 
+**Polski** · [English](README.en.md)
+
 > Zostaw ślad na wodzie.
 
 Kilwater to landing polskiej marki czarteru jachtów z załogą. Strona prowadzi przez cztery akweny (Chorwacja,
