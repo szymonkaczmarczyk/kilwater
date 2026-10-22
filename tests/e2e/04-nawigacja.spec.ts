@@ -46,3 +46,15 @@ test("przewijanie w trakcie wczytywania nie wraca na górę", async ({ page }) =
   await page.waitForTimeout(1200);
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
 });
+
+for (const reducedMotion of ["reduce", "no-preference"] as const) {
+  test(`nawigacja ma tło za hero (ruch: ${reducedMotion})`, async ({ browser }) => {
+    const context = await browser.newContext({ reducedMotion, viewport: { width: 1440, height: 900 } });
+    const page = await context.newPage();
+    await page.goto("/");
+    await expect(page.locator("[data-nav]")).not.toHaveClass(/is-scrolled/);
+    await page.evaluate(() => document.querySelector("#rejsy")!.scrollIntoView());
+    await expect(page.locator("[data-nav]")).toHaveClass(/is-scrolled/);
+    await context.close();
+  });
+}

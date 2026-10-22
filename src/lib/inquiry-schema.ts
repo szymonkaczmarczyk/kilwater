@@ -42,9 +42,12 @@ export const inquirySchema = z.strictObject({
 
 export type Inquiry = z.infer<typeof inquirySchema>;
 
+const unsupportedFieldMessage = "To pole nie jest obsługiwane.";
+
 export const fieldErrors = (error: z.ZodError) =>
   Object.fromEntries(
-    error.issues
-      .filter((issue) => typeof issue.path[0] === "string")
-      .map((issue) => [issue.path[0] as string, issue.message]),
+    error.issues.flatMap((issue) => {
+      if (issue.code === "unrecognized_keys") return issue.keys.map((key) => [key, unsupportedFieldMessage]);
+      return typeof issue.path[0] === "string" ? [[issue.path[0], issue.message]] : [];
+    }),
   );

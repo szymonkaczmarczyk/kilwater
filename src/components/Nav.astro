@@ -71,6 +71,16 @@ const links = [
   const openButton = document.querySelector<HTMLButtonElement>("[data-menu-open]");
   const closeButton = document.querySelector<HTMLButtonElement>("[data-menu-close]");
 
+  const nav = document.querySelector<HTMLElement>("[data-nav]");
+  const hero = document.querySelector<HTMLElement>("[data-hero]");
+
+  if (nav && hero) {
+    new IntersectionObserver(
+      ([entry]) => nav.classList.toggle("is-scrolled", !entry.isIntersecting),
+      { rootMargin: `-${nav.offsetHeight}px 0px 0px 0px` },
+    ).observe(hero);
+  }
+
   const setMenuOpen = (isOpen: boolean) => {
     if (!menu || !openButton) return;
     menu.hidden = !isOpen;

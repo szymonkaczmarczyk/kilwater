@@ -188,8 +188,6 @@ import heroImage from "../assets/photos/hero-kilwater.png";
           invalidateOnRefresh: true,
           onUpdate: (self) => nav?.classList.toggle("is-on-deep", self.progress > 0.4 && self.progress < 1),
           onRefresh: placeOutline,
-          onLeave: () => nav?.classList.add("is-scrolled"),
-          onEnterBack: () => nav?.classList.remove("is-scrolled"),
         },
       });
 

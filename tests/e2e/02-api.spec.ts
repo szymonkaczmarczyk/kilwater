@@ -34,6 +34,7 @@ test.describe.serial("endpoint /api/zapytanie", () => {
     expect(response.status()).toBe(400);
     const body = await response.json();
     expect(body.errors.guests).toContain("Maksymalnie 12");
+    expect(body.errors.isAdmin).toBe("To pole nie jest obsługiwane.");
     expect(JSON.stringify(body)).not.toContain("stack");
   });
 
