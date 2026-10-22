@@ -1,0 +1,463 @@
+---
+import { Picture } from "astro:assets";
+import Logo from "./Logo.astro";
+import heroImage from "../assets/photos/hero-kilwater.png";
+---
+
+<section class="hero" aria-labelledby="hero-title" style={`--hero-ratio: ${heroImage.width / heroImage.height}`} data-hero>
+  <div class="hero__stage" data-hero-stage>
+    <div class="hero__media" data-hero-media>
+      <Picture
+        src={heroImage}
+        alt="Biały jacht żaglowy na granatowym morzu, widziany z lotu ptaka, zostawia za sobą długi zakręcający ślad piany"
+        formats={["avif", "webp"]}
+        fallbackFormat="jpg"
+        widths={[640, 960, 1280]}
+        sizes="100vw"
+        loading="eager"
+        fetchpriority="high"
+        data-hero-image
+      />
+      <div class="hero__scrim" data-hero-scrim></div>
+    </div>
+
+    <svg class="hero__outline" aria-hidden="true" data-hero-outline>
+      <path data-hero-outline-path />
+    </svg>
+
+    <div class="hero__layout" data-hero-intro>
+      <div class="hero__copy">
+        <p class="label" data-hero-fade>Czarter jachtów z załogą</p>
+        <h1 id="hero-title" class="hero__title">
+          <span class="hero__line"><span data-hero-line>Zostaw ślad</span></span>
+          <span class="hero__line"><span data-hero-line>na wodzie</span></span>
+        </h1>
+      </div>
+
+      <div class="hero__window" data-hero-window aria-hidden="true"></div>
+
+      <div class="hero__aside">
+        <p class="hero__lead" data-hero-fade>
+          Jachty żaglowe, katamarany i jachty motorowe w Chorwacji, Grecji, Włoszech i na Mazurach. Jeden broker prowadzi Cię od pomysłu do ostatniego zachodu słońca.
+        </p>
+        <div class="hero__actions" data-hero-fade>
+          <a class="button button--solid" href="#zapytanie">
+            Zaplanuj rejs
+            <span class="button__arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="link-underline" href="#akweny">Zobacz akweny</a>
+        </div>
+      </div>
+
+      <p class="hero__scroll" aria-hidden="true" data-hero-fade>
+        Przewiń
+        <span class="hero__scroll-line"></span>
+      </p>
+    </div>
+
+    <div class="hero__reveal" data-hero-reveal>
+      <Logo withWordmark={false} class="hero__reveal-sign" />
+      <p class="hero__wordmark" aria-hidden="true" data-hero-wordmark>Kilwater</p>
+      <p class="hero__reveal-text">
+        Kilwater to ślad, który jacht zostawia na wodzie. Rejs zaplanowany z nami zostaje w pamięci dużo dłużej.
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, prefersReducedMotion } from "../scripts/motion";
+
+  const yachtFocus = { x: 0.703, y: 0.611 };
+  const desktopQuery = window.matchMedia("(min-width: 1024px)");
+
+  const hero = document.querySelector<HTMLElement>("[data-hero]");
+  const stage = hero?.querySelector<HTMLElement>("[data-hero-stage]");
+  const media = hero?.querySelector<HTMLElement>("[data-hero-media]");
+  const windowFrame = hero?.querySelector<HTMLElement>("[data-hero-window]");
+  const image = hero?.querySelector<HTMLImageElement>("[data-hero-image]");
+  const picture = image?.closest("picture");
+
+  const layout = hero?.querySelector<HTMLElement>("[data-hero-intro]");
+
+  const frameBox = () => {
+    const top = layout!.offsetTop + windowFrame!.offsetTop;
+    const left = layout!.offsetLeft + windowFrame!.offsetLeft;
+    const width = windowFrame!.offsetWidth;
+    const height = windowFrame!.offsetHeight;
+    return {
+      top,
+      left,
+      right: stage!.clientWidth - left - width,
+      bottom: stage!.clientHeight - top - height,
+      centerX: left + width / 2,
+      centerY: top + height / 2,
+    };
+  };
+
+  const archRadius = () => windowFrame!.offsetWidth / 2;
+
+  const windowInset = () => {
+    const box = frameBox();
+    const radius = archRadius();
+    return `inset(${box.top}px ${box.right}px ${box.bottom}px ${box.left}px round ${radius}px ${radius}px 4px 4px)`;
+  };
+
+  const outline = hero?.querySelector<SVGSVGElement>("[data-hero-outline]");
+  const outlinePath = hero?.querySelector<SVGPathElement>("[data-hero-outline-path]");
+  const outlineGap = 14;
+
+  const placeOutline = () => {
+    if (!outline || !outlinePath) return 0;
+    const box = frameBox();
+    const width = windowFrame!.offsetWidth + outlineGap * 2;
+    const height = windowFrame!.offsetHeight + outlineGap * 2;
+    const radius = width / 2;
+    outline.style.left = `${box.left - outlineGap}px`;
+    outline.style.top = `${box.top - outlineGap}px`;
+    outline.setAttribute("width", String(width));
+    outline.setAttribute("height", String(height));
+    outline.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    outlinePath.setAttribute(
+      "d",
+      `M0.5 ${height - 0.5} V${radius} A${radius - 0.5} ${radius - 0.5} 0 0 1 ${width - 0.5} ${radius} V${height - 0.5} Z`,
+    );
+    const length = outlinePath.getTotalLength();
+    outlinePath.style.strokeDasharray = String(length);
+    return length;
+  };
+
+  const yachtPoint = () => ({
+    x: image!.offsetLeft + yachtFocus.x * image!.offsetWidth,
+    y: image!.offsetTop + yachtFocus.y * image!.offsetHeight,
+  });
+
+  const focusOnYacht = () => {
+    const width = stage!.clientWidth;
+    const height = stage!.clientHeight;
+    const scale = desktopQuery.matches ? 1.12 : 1;
+    const yacht = yachtPoint();
+    const box = frameBox();
+    return {
+      scale,
+      x: box.centerX - (width / 2 + (yacht.x - width / 2) * scale),
+      y: box.centerY - (height / 2 + (yacht.y - height / 2) * scale),
+    };
+  };
+
+  const settleOnYacht = () => {
+    const width = stage!.clientWidth;
+    const imageLeft = image!.offsetLeft;
+    const imageRight = imageLeft + image!.offsetWidth;
+    const preferredX = width * 0.62 - yachtPoint().x;
+    return Math.min(-imageLeft, Math.max(width - imageRight, preferredX));
+  };
+
+  const placeStatic = () => {
+    gsap.set(media!, { clipPath: windowInset() });
+    gsap.set(image!, focusOnYacht());
+    placeOutline();
+  };
+
+  if (hero && stage && layout && media && windowFrame && image && picture) {
+    placeStatic();
+
+    if (prefersReducedMotion()) {
+      window.addEventListener("resize", placeStatic);
+      image.addEventListener("load", placeStatic);
+    } else {
+      const outlineLength = placeOutline();
+      const intro = gsap.timeline({ defaults: { ease: "expo.out" } });
+      intro
+        .fromTo(outlinePath!, { strokeDashoffset: outlineLength }, { strokeDashoffset: 0, duration: 2.4, ease: "power2.inOut" }, 0)
+        .from(media, { opacity: 0, duration: 1.4 }, 0.2)
+        .from(picture, { scale: 1.2, filter: "blur(18px)", duration: 1.8 }, 0)
+        .from("[data-hero-line]", { yPercent: 110, duration: 1.2, stagger: 0.1 }, 0.25)
+        .from("[data-hero-fade]", { opacity: 0, y: 16, duration: 1, stagger: 0.08 }, 0.5);
+
+      const nav = document.querySelector<HTMLElement>("[data-nav]");
+
+      const expand = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: hero,
+          start: "top top",
+          end: "+=160%",
+          pin: stage,
+          scrub: 1,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => nav?.classList.toggle("is-on-deep", self.progress > 0.4 && self.progress < 1),
+          onRefresh: placeOutline,
+          onLeave: () => nav?.classList.add("is-scrolled"),
+          onEnterBack: () => nav?.classList.remove("is-scrolled"),
+        },
+      });
+
+      expand
+        .fromTo(media, { clipPath: windowInset }, { clipPath: "inset(0px 0px 0px 0px round 0px 0px 0px 0px)", duration: 0.6 }, 0)
+        .fromTo(
+          image,
+          { scale: () => focusOnYacht().scale, x: () => focusOnYacht().x, y: () => focusOnYacht().y },
+          { scale: 1, x: settleOnYacht, y: 0, duration: 0.6 },
+          0,
+        )
+        .to("[data-hero-intro]", { opacity: 0, y: -48, duration: 0.25 }, 0)
+        .to(outline!, { opacity: 0, scale: 1.08, duration: 0.15 }, 0)
+        .to("[data-hero-scrim]", { opacity: 1, duration: 0.3 }, 0.35)
+        .fromTo("[data-hero-reveal]", { opacity: 0, y: 48 }, { opacity: 1, y: 0, duration: 0.3 }, 0.55)
+        .fromTo("[data-hero-wordmark]", { letterSpacing: "0.42em" }, { letterSpacing: "0.18em", duration: 0.4 }, 0.5)
+        .to({}, { duration: 0.15 });
+    }
+  }
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    background: var(--surface-page);
+  }
+
+  .hero__stage {
+    position: relative;
+    height: 100svh;
+    min-height: 560px;
+    overflow: hidden;
+  }
+
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    clip-path: inset(30% 20% 30% 20% round 30vw 30vw 4px 4px);
+    background: var(--surface-deep);
+    will-change: clip-path;
+  }
+
+  .hero__media :global(picture) {
+    position: absolute;
+    inset: 0;
+  }
+
+  .hero__media :global(img) {
+    --cover-width: max(100vw, calc(max(100svh, 560px) * var(--hero-ratio)));
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--cover-width);
+    max-width: none;
+    height: calc(var(--cover-width) / var(--hero-ratio));
+    margin-top: calc(var(--cover-width) / var(--hero-ratio) / -2);
+    margin-left: calc(var(--cover-width) / -2);
+    transform-origin: 50% 50%;
+  }
+
+  .hero__outline {
+    position: absolute;
+    z-index: 1;
+    overflow: visible;
+    transform-origin: 50% 60%;
+    pointer-events: none;
+  }
+
+  .hero__outline path {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1;
+    opacity: 0.7;
+  }
+
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% 52%, var(--scrim-deep), transparent 100%),
+      linear-gradient(180deg, transparent 30%, var(--scrim-deep) 100%);
+    opacity: 0;
+  }
+
+  .hero__layout {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: var(--space-5);
+    height: 100%;
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: calc(var(--nav-height) + var(--space-4)) var(--gutter) var(--space-6);
+  }
+
+  .hero__copy {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .hero__title {
+    display: grid;
+    font-family: var(--font-display);
+    font-size: var(--size-h1);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.04em;
+  }
+
+  .hero__line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.06em;
+  }
+
+  .hero__line > span {
+    display: block;
+  }
+
+  .hero__window {
+    justify-self: center;
+    align-self: center;
+    height: min(100%, 420px);
+    min-height: 180px;
+    aspect-ratio: 4 / 5;
+    max-width: calc(100% - var(--space-6));
+  }
+
+  .hero__aside {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .hero__lead {
+    max-width: 44ch;
+    font-size: var(--size-body-large);
+    color: var(--text-muted);
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-5);
+  }
+
+  .hero__scroll {
+    display: none;
+  }
+
+  .hero__reveal {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    align-content: start;
+    justify-content: center;
+    justify-items: center;
+    gap: var(--space-5);
+    padding: calc(var(--nav-height) + 10svh) var(--gutter) var(--space-8);
+    color: var(--text-on-deep);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hero__reveal :global(.hero__reveal-sign svg) {
+    width: 28px;
+    height: 40px;
+  }
+
+  .hero__wordmark {
+    font-family: var(--font-display);
+    font-size: var(--size-wordmark);
+    font-weight: var(--weight-light);
+    line-height: 1;
+    letter-spacing: var(--tracking-wordmark);
+    text-transform: uppercase;
+    margin-right: calc(var(--tracking-wordmark) * -1);
+  }
+
+  .hero__reveal-text {
+    max-width: 40ch;
+    font-size: var(--size-body-large);
+    color: var(--text-on-deep-muted);
+  }
+
+  @media (min-width: 1024px) {
+    .hero__media {
+      clip-path: inset(17% 36% 17% 36% round 15vw 15vw 4px 4px);
+    }
+
+    .hero__layout {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      grid-template-rows: 1fr;
+      column-gap: var(--space-5);
+      padding-bottom: var(--space-8);
+    }
+
+    .hero__copy {
+      grid-column: 1 / span 4;
+      align-self: end;
+    }
+
+    .hero__window {
+      grid-column: 5 / span 4;
+      grid-row: 1;
+      height: min(58svh, 560px);
+      max-width: calc(100% - var(--space-6));
+      aspect-ratio: 3 / 4;
+      margin-top: var(--space-6);
+    }
+
+    .hero__aside {
+      grid-column: 9 / span 4;
+      align-self: end;
+    }
+
+    .hero__reveal {
+      align-content: center;
+      padding-top: var(--nav-height);
+    }
+
+    .hero__scroll {
+      position: absolute;
+      left: 50%;
+      bottom: var(--space-5);
+      display: grid;
+      justify-items: center;
+      gap: var(--space-2);
+      font-size: var(--size-label);
+      font-weight: var(--weight-medium);
+      letter-spacing: var(--tracking-label);
+      text-transform: uppercase;
+      color: var(--text-muted);
+      transform: translateX(-50%);
+    }
+
+    .hero__scroll-line {
+      width: 1px;
+      height: 32px;
+      background: currentColor;
+      transform-origin: top;
+      animation: scroll-hint 2.4s var(--ease-out) infinite;
+    }
+  }
+
+  @keyframes scroll-hint {
+    0% {
+      transform: scaleY(0);
+    }
+    50% {
+      transform: scaleY(1);
+      transform-origin: top;
+    }
+    51% {
+      transform-origin: bottom;
+    }
+    100% {
+      transform: scaleY(0);
+      transform-origin: bottom;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__reveal {
+      display: none;
+    }
+  }
+</style>

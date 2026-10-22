@@ -1,0 +1,143 @@
+<div class="voyage" data-voyage>
+  <svg class="voyage__wake" aria-hidden="true" data-wake>
+    <path class="voyage__trail" data-wake-trail />
+    <g class="voyage__boat" data-wake-boat>
+      <path d="M0 -9L4 4H-4Z" />
+      <path d="M-5 5.5H5L3.5 8.5H-3.5Z" />
+    </g>
+  </svg>
+  <slot />
+</div>
+
+<script>
+  import { gsap, ScrollTrigger, prefersReducedMotion } from "../scripts/motion";
+
+  const voyage = document.querySelector<HTMLElement>("[data-voyage]");
+  const svg = voyage?.querySelector<SVGSVGElement>("[data-wake]");
+  const trail = voyage?.querySelector<SVGPathElement>("[data-wake-trail]");
+  const boat = voyage?.querySelector<SVGGElement>("[data-wake-boat]");
+
+  const headOffset = 0.62;
+  const sampleCount = 600;
+
+  type Sample = { length: number; y: number };
+
+  let totalLength = 0;
+  let samples: Sample[] = [];
+  const drawn = { length: 0 };
+
+  const wakePoints = () => {
+    const origin = voyage!.getBoundingClientRect();
+    return [...voyage!.querySelectorAll<HTMLElement>("[data-wake-point]")]
+      .filter((point) => point.offsetParent !== null)
+      .map((point) => {
+        const box = point.getBoundingClientRect();
+        return { x: box.left - origin.left, y: box.top - origin.top };
+      });
+  };
+
+  const curveThrough = (points: { x: number; y: number }[]) =>
+    points.reduce((path, point, index) => {
+      if (index === 0) return `M${point.x} ${point.y}`;
+      const previous = points[index - 1];
+      const bend = (point.y - previous.y) * 0.5;
+      return `${path} C${previous.x} ${previous.y + bend} ${point.x} ${point.y - bend} ${point.x} ${point.y}`;
+    }, "");
+
+  const lengthAtY = (targetY: number) => {
+    if (!samples.length) return 0;
+    if (targetY <= samples[0].y) return 0;
+    if (targetY >= samples[samples.length - 1].y) return totalLength;
+    let low = 0;
+    let high = samples.length - 1;
+    while (high - low > 1) {
+      const middle = (low + high) >> 1;
+      if (samples[middle].y < targetY) low = middle;
+      else high = middle;
+    }
+    return samples[high].length;
+  };
+
+  const render = () => {
+    if (!trail || !boat) return;
+    const length = Math.min(drawn.length, totalLength);
+    trail.style.strokeDashoffset = String(totalLength - length);
+    const head = trail.getPointAtLength(length);
+    const ahead = trail.getPointAtLength(Math.min(length + 2, totalLength));
+    const heading = (Math.atan2(ahead.y - head.y, ahead.x - head.x) * 180) / Math.PI + 90;
+    boat.setAttribute("transform", `translate(${head.x} ${head.y}) rotate(${heading})`);
+    boat.style.opacity = length > 4 && length < totalLength - 4 ? "1" : "0";
+  };
+
+  const followScroll = gsap.quickTo(drawn, "length", { duration: 0.8, ease: "power3.out", onUpdate: render });
+
+  const targetLength = () => {
+    const top = voyage!.getBoundingClientRect().top;
+    return lengthAtY(window.innerHeight * headOffset - top);
+  };
+
+  const build = () => {
+    if (!voyage || !svg || !trail) return;
+    const width = voyage.offsetWidth;
+    const height = voyage.offsetHeight;
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    trail.setAttribute("d", curveThrough(wakePoints()));
+    totalLength = trail.getTotalLength();
+    samples = Array.from({ length: sampleCount + 1 }, (_, index) => {
+      const length = (totalLength * index) / sampleCount;
+      return { length, y: trail.getPointAtLength(length).y };
+    });
+    trail.style.strokeDasharray = String(totalLength);
+
+    if (prefersReducedMotion()) {
+      drawn.length = totalLength;
+    } else {
+      drawn.length = targetLength();
+    }
+    render();
+  };
+
+  if (voyage && svg && trail && boat) {
+    build();
+    ScrollTrigger.addEventListener("refresh", build);
+    new ResizeObserver(() => ScrollTrigger.refresh()).observe(voyage);
+
+    if (!prefersReducedMotion()) {
+      ScrollTrigger.create({
+        trigger: voyage,
+        start: "top bottom",
+        end: "bottom top",
+        onUpdate: () => followScroll(targetLength()),
+      });
+    }
+  }
+</script>
+
+<style>
+  .voyage {
+    position: relative;
+  }
+
+  .voyage__wake {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .voyage__trail {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+  }
+
+  .voyage__boat {
+    fill: var(--accent);
+    opacity: 0;
+    transition: opacity var(--duration-base) var(--ease-out);
+  }
+</style>

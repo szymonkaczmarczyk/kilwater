@@ -1,0 +1,266 @@
+---
+import Logo from "./Logo.astro";
+
+interface Props {
+  solid?: boolean;
+}
+
+const { solid = false } = Astro.props;
+
+const links = [
+  { href: "/#akweny", label: "Akweny" },
+  { href: "/#rejsy", label: "Rodzaje rejsów" },
+  { href: "/#zaloga", label: "Załoga i dodatki" },
+  { href: "/#jak-to-dziala", label: "Jak to działa" },
+];
+---
+
+<header class:list={["nav", { "is-scrolled": solid }]} data-nav>
+  <div class="nav__inner">
+    <a href="/" class="nav__brand" aria-label="Kilwater, strona główna">
+      <Logo />
+    </a>
+
+    <nav class="nav__links" aria-label="Główna nawigacja">
+      <ul>
+        {links.map((link) => (
+          <li><a href={link.href} class="nav__link">{link.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+
+    <a href="/#zapytanie" class="button nav__cta">
+      Zaplanuj rejs
+      <span class="button__arrow" aria-hidden="true">→</span>
+    </a>
+
+    <button class="nav__menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-open>
+      Menu
+    </button>
+  </div>
+
+  <div class="sheet" id="mobile-menu" hidden data-menu>
+    <div class="sheet__top">
+      <button class="sheet__close" type="button" data-menu-close>
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+          <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+        </svg>
+        Zamknij
+      </button>
+      <Logo withWordmark={false} />
+    </div>
+    <ul class="sheet__links">
+      {links.map((link, index) => (
+        <li>
+          <a href={link.href} class="sheet__link" data-menu-link>
+            <span class="sheet__index">{String(index + 1).padStart(2, "0")}</span>
+            {link.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+    <a href="/#zapytanie" class="button button--solid sheet__cta" data-menu-link>
+      Zaplanuj rejs
+      <span class="button__arrow" aria-hidden="true">→</span>
+    </a>
+  </div>
+</header>
+
+<script>
+  const menu = document.querySelector<HTMLElement>("[data-menu]");
+  const openButton = document.querySelector<HTMLButtonElement>("[data-menu-open]");
+  const closeButton = document.querySelector<HTMLButtonElement>("[data-menu-close]");
+
+  const setMenuOpen = (isOpen: boolean) => {
+    if (!menu || !openButton) return;
+    menu.hidden = !isOpen;
+    openButton.setAttribute("aria-expanded", String(isOpen));
+    document.documentElement.classList.toggle("is-menu-open", isOpen);
+    document.querySelectorAll<HTMLElement>("main, footer").forEach((region) => {
+      region.inert = isOpen;
+    });
+    (isOpen ? closeButton : openButton)?.focus();
+  };
+
+  openButton?.addEventListener("click", () => setMenuOpen(true));
+  closeButton?.addEventListener("click", () => setMenuOpen(false));
+  menu?.querySelectorAll("[data-menu-link]").forEach((link) => {
+    link.addEventListener("click", () => setMenuOpen(false));
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menu && !menu.hidden) setMenuOpen(false);
+  });
+</script>
+
+<style>
+  .nav {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 50;
+    color: var(--text-strong);
+    transition:
+      color var(--duration-base) var(--ease-out),
+      background-color var(--duration-base) var(--ease-out);
+  }
+
+  .nav.is-on-deep {
+    color: var(--text-on-deep);
+  }
+
+  .nav.is-scrolled {
+    background: color-mix(in srgb, var(--surface-page) 88%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--text-strong);
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    height: var(--nav-height);
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+  }
+
+  .nav__brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit-target);
+  }
+
+  .nav__links,
+  .nav__cta {
+    display: none;
+  }
+
+  .nav__links ul {
+    display: flex;
+    gap: var(--space-6);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nav__link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--hit-target);
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .nav__link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 12px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  .nav__menu-toggle {
+    min-height: var(--hit-target);
+    min-width: var(--hit-target);
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    padding: 0 var(--gutter) calc(var(--space-6) + env(safe-area-inset-bottom));
+    background: var(--surface-deep);
+    color: var(--text-on-deep);
+    overscroll-behavior: contain;
+  }
+
+  .sheet[hidden] {
+    display: none;
+  }
+
+  .sheet__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--nav-height);
+  }
+
+  .sheet__close {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--hit-target);
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .sheet__links {
+    display: grid;
+    gap: var(--space-2);
+    margin: var(--space-8) 0 auto;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sheet__link {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--line-on-deep);
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    letter-spacing: var(--tracking-display-caps);
+    text-transform: uppercase;
+  }
+
+  .sheet__index {
+    font-family: var(--font-body);
+    font-size: var(--size-label);
+    letter-spacing: var(--tracking-label);
+    color: var(--text-on-deep-muted);
+  }
+
+  .sheet__cta {
+    width: 100%;
+    background: var(--text-on-deep);
+    border-color: var(--text-on-deep);
+    color: var(--text-strong);
+  }
+
+  @media (hover: hover) {
+    .nav__link:hover::after {
+      transform: scaleX(1);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .nav__links,
+    .nav__cta {
+      display: flex;
+    }
+
+    .nav__menu-toggle {
+      display: none;
+    }
+  }
+</style>

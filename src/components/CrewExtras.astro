@@ -1,0 +1,288 @@
+---
+import { Picture } from "astro:assets";
+import LineIcon, { type IconName } from "./LineIcon.astro";
+import extrasImage from "../assets/photos/dodatki.webp";
+
+const crew: { icon: IconName; role: string; text: string }[] = [
+  {
+    icon: "helm",
+    role: "Skipper",
+    text: "Prowadzi jacht, układa trasę pod pogodę i zna porty, w których warto stanąć na noc.",
+  },
+  {
+    icon: "cup",
+    role: "Hostessa",
+    text: "Dba o kabiny i pokład, żeby rano czekała kawa, a wieczorem świeże ręczniki.",
+  },
+  {
+    icon: "chef",
+    role: "Kucharz",
+    text: "Gotuje z lokalnych produktów kupionych w porcie, pod gusta i diety całej załogi.",
+  },
+];
+
+const extras: { icon: IconName; name: string; text: string }[] = [
+  { icon: "paddleboard", name: "Deski SUP", text: "Na poranne wypady wzdłuż brzegu zatoki." },
+  { icon: "mask", name: "Sprzęt do snorkelingu", text: "Maski, rurki i płetwy w rozmiarach całej załogi." },
+  { icon: "dinghy", name: "Ponton z silnikiem", text: "Do zejścia na ląd, gdy jacht stoi na kotwicy." },
+  { icon: "plane", name: "Transfer z lotniska", text: "Z hali przylotów prosto do mariny." },
+  { icon: "basket", name: "Zaopatrzenie jachtu", text: "Lista zakupów rozpakowana, zanim wejdziesz na pokład." },
+  { icon: "towel", name: "Pościel i ręczniki", text: "Komplet na każdą koję i sprzątanie po rejsie." },
+];
+---
+
+<section class="crew" id="zaloga" aria-labelledby="crew-title">
+  <div class="crew__inner">
+    <header class="crew__head">
+      <p class="label">Załoga i dodatki</p>
+      <h2 id="crew-title" class="section-title">Ludzie i drobiazgi,<br />które robią rejs</h2>
+      <p class="section-lead crew__lead">
+        <span class="wake-point crew__wake" data-wake-point="end" aria-hidden="true"></span>
+        Dobierasz tyle załogi i dodatków, ile potrzebujesz. Resztę zostawiasz nam i dostajesz jedną, zamkniętą ofertę.
+      </p>
+    </header>
+
+    <ul class="crew__roles">
+      {crew.map((member) => (
+        <li class="role" data-reveal>
+          <LineIcon name={member.icon} class="role__icon" />
+          <h3 class="role__name">{member.role}</h3>
+          <p class="role__text">{member.text}</p>
+        </li>
+      ))}
+    </ul>
+
+    <div class="crew__extras">
+      <figure class="frame frame--arch crew__frame" data-reveal>
+        <Picture
+          src={extrasImage}
+          alt="Dwie deski SUP, maski i płetwy na tekowym dziobie jachtu nad turkusową, przejrzystą wodą"
+          formats={["avif", "webp"]}
+          fallbackFormat="jpg"
+          widths={[480, 896]}
+          sizes="(min-width: 1024px) 34vw, 80vw"
+          loading="lazy"
+          data-parallax
+        />
+      </figure>
+
+      <div class="crew__extras-copy">
+        <h3 class="crew__extras-title">Dodatki na pokład</h3>
+        <ul class="extras">
+          {extras.map((extra) => (
+            <li class="extra">
+              <LineIcon name={extra.icon} class="extra__icon" />
+              <div>
+                <p class="extra__name">{extra.name}</p>
+                <p class="extra__text">{extra.text}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <a class="button button--solid crew__cta" href="#zapytanie">
+          Skomponuj rejs z dodatkami
+          <span class="button__arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .crew {
+    position: relative;
+    background: var(--surface-raised);
+    padding: var(--space-9) var(--gutter);
+  }
+
+  .crew__inner {
+    position: relative;
+    z-index: 2;
+    max-width: var(--page-max);
+    margin: 0 auto;
+  }
+
+  .crew__head {
+    display: grid;
+    gap: var(--space-5);
+    margin-bottom: var(--space-8);
+  }
+
+  .crew__head .label {
+    color: var(--text-muted);
+  }
+
+  .crew__roles {
+    display: grid;
+    margin: 0 0 var(--space-9);
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .role {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: var(--space-4);
+    row-gap: var(--space-2);
+    padding: var(--space-6) 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .role :global(.role__icon) {
+    grid-row: span 2;
+    color: var(--accent);
+  }
+
+  .role__name {
+    font-family: var(--font-display);
+    font-size: var(--size-h4);
+    font-weight: var(--weight-regular);
+    letter-spacing: var(--tracking-display-caps);
+    text-transform: uppercase;
+  }
+
+  .role__text {
+    max-width: 40ch;
+    color: var(--text-muted);
+  }
+
+  .crew__extras {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  .crew__frame {
+    width: min(100%, 420px);
+    aspect-ratio: 4 / 5;
+    justify-self: center;
+  }
+
+  .crew__extras-copy {
+    position: relative;
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .crew__lead {
+    position: relative;
+  }
+
+  .crew__wake {
+    left: calc(var(--gutter) * -0.5);
+    top: 0;
+  }
+
+  .crew__extras-title {
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: var(--tracking-display-caps);
+    text-transform: uppercase;
+  }
+
+  .extras {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .extra {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .extra :global(.extra__icon) {
+    color: var(--accent);
+  }
+
+  .extra__name {
+    font-weight: var(--weight-medium);
+  }
+
+  .extra__text {
+    font-size: var(--size-small);
+    color: var(--text-muted);
+  }
+
+  .crew__cta {
+    justify-self: start;
+  }
+
+  @media (min-width: 768px) {
+    .crew__roles {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: var(--space-6);
+      border-top: 0;
+    }
+
+    .role {
+      grid-template-columns: 1fr;
+      border-top: 1px solid var(--line-soft);
+      border-bottom: 0;
+    }
+
+    .role :global(.role__icon) {
+      grid-row: auto;
+      margin-bottom: var(--space-3);
+    }
+
+    .extras {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--space-6);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .crew {
+      padding-block: var(--space-10);
+    }
+
+    .crew__head {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+      align-items: end;
+      margin-bottom: var(--space-9);
+    }
+
+    .crew__head .label {
+      grid-column: 1 / -1;
+    }
+
+    .crew__head .section-title {
+      grid-column: 1 / span 7;
+    }
+
+    .crew__head .section-lead {
+      grid-column: 9 / span 4;
+    }
+
+    .crew__roles {
+      margin-bottom: var(--space-10);
+    }
+
+    .crew__extras {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+      align-items: center;
+    }
+
+    .crew__frame {
+      grid-column: 1 / span 5;
+      width: 100%;
+    }
+
+    .crew__extras-copy {
+      grid-column: 7 / span 6;
+    }
+
+    .crew__wake {
+      left: calc(var(--space-5) * -2);
+    }
+  }
+</style>

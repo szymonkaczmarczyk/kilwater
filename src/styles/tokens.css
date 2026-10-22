@@ -1,0 +1,96 @@
+:root {
+  --color-sand-50: #f7f2ea;
+  --color-sand-100: #f3ede2;
+  --color-sand-200: #ead7ca;
+  --color-navy-950: #071320;
+  --color-navy-900: #0b1b2b;
+  --color-navy-700: #1b3448;
+  --color-brass-500: #b08a4e;
+  --color-brass-300: #d4b98a;
+  --color-coral-400: #f08a73;
+  --color-sea-green-300: #8fd1a8;
+
+  --surface-page: var(--color-sand-50);
+  --surface-raised: var(--color-sand-100);
+  --surface-deep: var(--color-navy-900);
+  --text-strong: var(--color-navy-900);
+  --text-muted: color-mix(in srgb, var(--color-navy-900) 68%, transparent);
+  --text-on-deep: var(--color-sand-50);
+  --text-on-deep-muted: color-mix(in srgb, var(--color-sand-50) 72%, transparent);
+  --line-soft: color-mix(in srgb, var(--color-navy-900) 16%, transparent);
+  --line-on-deep: color-mix(in srgb, var(--color-sand-50) 28%, transparent);
+  --accent: var(--color-brass-500);
+  --focus-ring: var(--color-brass-500);
+  --scrim-deep: color-mix(in srgb, var(--color-navy-950) 55%, transparent);
+  --danger-on-deep: var(--color-coral-400);
+  --success-on-deep: var(--color-sea-green-300);
+  --field-on-deep: color-mix(in srgb, var(--color-sand-50) 6%, transparent);
+
+  --font-display: "Jost Variable", "Jost", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --size-h1: 44px;
+  --size-h2: 32px;
+  --size-h3: 28px;
+  --size-h4: 18px;
+  --size-body-large: 16px;
+  --size-body: 16px;
+  --size-small: 14px;
+  --size-label: 12px;
+  --size-wordmark: clamp(48px, 11vw, 168px);
+
+  --leading-heading: 1.05;
+  --leading-body: 1.6;
+  --tracking-body: -0.02em;
+  --tracking-display-caps: 0.06em;
+  --tracking-label: 0.14em;
+  --tracking-wordmark: 0.18em;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+  --gutter: 16px;
+  --page-max: 1440px;
+  --measure: 60ch;
+
+  --radius-sm: 2px;
+  --radius-md: 8px;
+  --hit-target: 44px;
+
+  --nav-height: 72px;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 200ms;
+  --duration-base: 400ms;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --size-h1: 64px;
+    --size-h2: 56px;
+    --size-h3: 32px;
+    --size-h4: 20px;
+    --size-body-large: 18px;
+    --gutter: 32px;
+    --nav-height: 80px;
+  }
+}
+
+@media (min-width: 1200px) {
+  :root {
+    --size-h1: 80px;
+    --gutter: 48px;
+  }
+}

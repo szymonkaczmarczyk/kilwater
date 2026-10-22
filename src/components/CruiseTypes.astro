@@ -1,0 +1,304 @@
+---
+import { Picture } from "astro:assets";
+import crewImage from "../assets/photos/zaloga.jpg";
+import skipperImage from "../assets/photos/skipper.webp";
+import friendsImage from "../assets/photos/przyjaciele.webp";
+
+const cruiseTypes = [
+  {
+    name: "Z pełną załogą",
+    text: "Skipper prowadzi jacht, hostessa dba o kabiny, kucharz o stół. Ty wybierasz tylko zatokę na kolejny dzień i godzinę kąpieli.",
+    audience: "Dla rodzin, firm i wyjazdów z okazji",
+    included: ["Skipper, hostessa i kucharz", "Trasa ułożona pod pogodę", "Pełne wyżywienie na pokładzie"],
+    image: crewImage,
+    alt: "Członek załogi w lnianym mundurze podaje śniadanie z figami, brzoskwiniami i rogalikami na tekowym stole jachtu",
+    focus: "45% 60%",
+  },
+  {
+    name: "Ze skipperem",
+    text: "Doświadczony skipper prowadzi jacht i zna lokalne kotwicowiska. Gotujecie sami albo jecie w portowych tawernach, a na wodzie uczycie się tyle, ile chcecie.",
+    audience: "Dla grup bez patentu i na pierwszy rejs",
+    included: ["Skipper na cały rejs", "Pomoc przy manewrach i nauka", "Trasa i rezerwacje miejsc w marinach"],
+    image: skipperImage,
+    alt: "Opalone dłonie skippera na drewnianym kole sterowym jachtu, obok mosiężny kompas, w tle rozmyte morze",
+    focus: "50% 55%",
+  },
+  {
+    name: "Bez załogi",
+    text: "Bierzesz jacht na własne uprawnienia i płyniesz, gdzie chcesz. My sprawdzamy jacht, dokumenty i odprawę, żebyś w dniu odbioru po prostu wypłynął.",
+    audience: "Dla żeglarzy z uprawnieniami wymaganymi w danym kraju",
+    included: ["Sprawdzony jacht i odprawa", "Dokumenty i lista załogi", "Pomoc na wodzie przez telefon"],
+    image: friendsImage,
+    alt: "Czworo przyjaciół siedzi na dziobie jachtu pod białymi żaglami i patrzy na skaliste wyspy w zachodzącym słońcu",
+    focus: "45% 50%",
+  },
+];
+---
+
+<section class="cruises" id="rejsy" aria-labelledby="cruises-title" data-cruises>
+  <div class="cruises__inner">
+    <header class="cruises__head">
+      <p class="label">Rodzaje rejsów</p>
+      <h2 id="cruises-title" class="section-title">Ile chcesz robić sam,<br />a ile zostawić nam</h2>
+    </header>
+
+    <div class="cruises__stage">
+      <div class="cruises__sticky" aria-hidden="true">
+        {cruiseTypes.map((cruise, index) => (
+          <figure class:list={["frame", "frame--arch", "cruises__frame", { "is-active": index === 0 }]} data-cruise-frame={index}>
+            <Picture
+              src={cruise.image}
+              alt=""
+              formats={["avif", "webp"]}
+              fallbackFormat="jpg"
+              widths={[640, 960, 1280]}
+              sizes="40vw"
+              loading="lazy"
+              style={`object-position: ${cruise.focus}`}
+            />
+          </figure>
+        ))}
+      </div>
+
+      <ol class="cruises__list">
+        {cruiseTypes.map((cruise, index) => (
+          <li class:list={["cruise", { "is-active": index === 0 }]} data-cruise-item={index}>
+            <figure class="frame frame--arch cruise__frame">
+              <Picture
+                src={cruise.image}
+                alt={cruise.alt}
+                formats={["avif", "webp"]}
+                fallbackFormat="jpg"
+                widths={[480, 800]}
+                sizes="100vw"
+                loading="lazy"
+                style={`object-position: ${cruise.focus}`}
+              />
+            </figure>
+            <p class="cruise__index">
+              <span class="wake-point cruise__wake" data-wake-point aria-hidden="true"></span>
+              {String(index + 1).padStart(2, "0")} / {String(cruiseTypes.length).padStart(2, "0")}
+            </p>
+            <h3 class="cruise__name">{cruise.name}</h3>
+            <p class="cruise__text">{cruise.text}</p>
+            <p class="cruise__audience">{cruise.audience}</p>
+            <ul class="cruise__included" aria-label={`Co obejmuje rejs: ${cruise.name}`}>
+              {cruise.included.map((item) => <li>{item}</li>)}
+            </ul>
+            <span class="wake-point wake-point--mobile cruise__wake cruise__wake-end" data-wake-point aria-hidden="true"></span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { ScrollTrigger } from "../scripts/motion";
+
+  const frames = document.querySelectorAll<HTMLElement>("[data-cruise-frame]");
+  const items = document.querySelectorAll<HTMLElement>("[data-cruise-item]");
+
+  const activate = (activeIndex: number) => {
+    frames.forEach((frame, index) => frame.classList.toggle("is-active", index === activeIndex));
+    items.forEach((item, index) => item.classList.toggle("is-active", index === activeIndex));
+  };
+
+  items.forEach((item, index) => {
+    ScrollTrigger.create({
+      trigger: item,
+      start: "top 55%",
+      end: "bottom 55%",
+      onToggle: (self) => self.isActive && activate(index),
+    });
+  });
+</script>
+
+<style>
+  .cruises {
+    position: relative;
+    background: var(--surface-deep);
+    color: var(--text-on-deep);
+    padding: var(--space-9) var(--gutter);
+  }
+
+  .cruises__inner {
+    position: relative;
+    z-index: 2;
+    max-width: var(--page-max);
+    margin: 0 auto;
+  }
+
+  .cruises__head {
+    display: grid;
+    gap: var(--space-5);
+    margin-bottom: var(--space-8);
+  }
+
+  .cruises__head .label {
+    color: var(--text-on-deep-muted);
+  }
+
+  .cruises__sticky {
+    display: none;
+  }
+
+  .cruises__list {
+    display: grid;
+    gap: var(--space-9);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cruise {
+    position: relative;
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .cruise__frame {
+    aspect-ratio: 4 / 5;
+    margin-bottom: var(--space-3);
+    background: var(--color-navy-700);
+  }
+
+  .cruise__wake {
+    left: calc(var(--gutter) * -0.5);
+  }
+
+  .cruise__index {
+    position: relative;
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    color: var(--color-brass-300);
+  }
+
+  .cruise__name {
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: var(--tracking-display-caps);
+    text-transform: uppercase;
+  }
+
+  .cruise__text {
+    max-width: 46ch;
+    font-size: var(--size-body-large);
+    color: var(--text-on-deep-muted);
+  }
+
+  .cruise__audience {
+    font-size: var(--size-small);
+    font-weight: var(--weight-medium);
+  }
+
+  .cruise__included {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line-on-deep);
+  }
+
+  .cruise__included li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--hit-target);
+    border-bottom: 1px solid var(--line-on-deep);
+    font-size: var(--size-small);
+  }
+
+  .cruise__included li::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border: 1px solid var(--color-brass-300);
+    border-radius: 50%;
+  }
+
+  .cruise__wake-end {
+    bottom: 0;
+  }
+
+  @media (max-width: 1023px) {
+    .cruise:nth-child(2) .cruise__wake {
+      right: calc(var(--gutter) * -0.5);
+      left: auto;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .cruises {
+      padding-block: var(--space-10);
+    }
+
+    .cruises__head {
+      margin-bottom: var(--space-9);
+    }
+
+    .cruises__stage {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+    }
+
+    .cruises__sticky {
+      position: sticky;
+      top: calc(var(--nav-height) + var(--space-6));
+      display: grid;
+      grid-column: 1 / span 5;
+      align-self: start;
+      height: calc(100svh - var(--nav-height) - var(--space-9));
+    }
+
+    .cruises__frame {
+      grid-area: 1 / 1;
+      background: var(--color-navy-700);
+      opacity: 0;
+      transform: scale(1.04);
+      transition:
+        opacity 700ms var(--ease-out),
+        transform 1200ms var(--ease-out);
+    }
+
+    .cruises__frame.is-active {
+      opacity: 1;
+      transform: none;
+    }
+
+    .cruises__list {
+      grid-column: 7 / span 5;
+      gap: 0;
+    }
+
+    .cruise {
+      min-height: 80svh;
+      align-content: center;
+      opacity: 0.35;
+      transition: opacity 600ms var(--ease-out);
+    }
+
+    .cruise.is-active {
+      opacity: 1;
+    }
+
+    .cruise__frame {
+      display: none;
+    }
+
+    .cruise__wake {
+      left: calc(var(--space-5) * -2);
+      top: 50%;
+    }
+  }
+
+  @media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+    .cruise {
+      opacity: 1;
+    }
+  }
+</style>

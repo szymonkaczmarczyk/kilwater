@@ -1,0 +1,131 @@
+---
+import { Picture } from "astro:assets";
+import Base from "../layouts/Base.astro";
+import fogImage from "../assets/photos/akwen-mazury.jpg";
+---
+
+<Base
+  title="Nie ma takiej strony - Kilwater"
+  description="Strona, której szukasz, nie istnieje albo zmieniła adres. Wróć na stronę główną Kilwater i wybierz nowy kurs."
+  solidNav
+  noindex
+>
+  <section class="lost" aria-labelledby="lost-title">
+    <div class="lost__copy">
+      <p class="label">Błąd 404</p>
+      <h1 id="lost-title" class="lost__title">Ten kurs prowadzi<br />prosto we mgłę</h1>
+      <p class="lost__text">
+        Strona, której szukasz, nie istnieje albo zmieniła adres. Wróć do portu i wybierz nowy kurs.
+      </p>
+      <div class="lost__actions">
+        <a class="button button--solid" href="/">
+          <span class="lost__back" aria-hidden="true">←</span>
+          Wróć na stronę główną
+        </a>
+        <a class="link-underline" href="/#zapytanie">Zaplanuj rejs</a>
+      </div>
+    </div>
+
+    <div class="lost__visual">
+      <span class="lost__outline" aria-hidden="true"></span>
+      <figure class="frame frame--arch lost__frame">
+        <Picture
+          src={fogImage}
+          alt="Drewniana żaglówka sunie przez gęstą poranną mgłę na mazurskim jeziorze"
+          formats={["avif", "webp"]}
+          fallbackFormat="jpg"
+          widths={[480, 800]}
+          sizes="(min-width: 1024px) 30vw, 70vw"
+          loading="eager"
+        />
+      </figure>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .lost {
+    display: grid;
+    gap: var(--space-8);
+    align-items: center;
+    min-height: 100svh;
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: calc(var(--nav-height) + var(--space-8)) var(--gutter) var(--space-9);
+  }
+
+  .lost__copy {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  .lost__copy .label {
+    color: var(--text-muted);
+  }
+
+  .lost__title {
+    font-family: var(--font-display);
+    font-size: var(--size-h1);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.04em;
+  }
+
+  .lost__text {
+    max-width: 40ch;
+    font-size: var(--size-body-large);
+    color: var(--text-muted);
+  }
+
+  .lost__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-5);
+  }
+
+  .lost__back {
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+
+  .lost__visual {
+    position: relative;
+    justify-self: center;
+    width: min(100%, 360px);
+  }
+
+  .lost__frame {
+    aspect-ratio: 3 / 4;
+  }
+
+  .lost__outline {
+    position: absolute;
+    inset: -14px;
+    border: 1px solid var(--accent);
+    border-radius: 999px 999px 10px 10px;
+    opacity: 0.7;
+  }
+
+  @media (hover: hover) {
+    .button:hover .lost__back {
+      transform: translateX(-4px);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .lost {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+    }
+
+    .lost__copy {
+      grid-column: 1 / span 6;
+    }
+
+    .lost__visual {
+      grid-column: 8 / span 4;
+      width: 100%;
+    }
+  }
+</style>

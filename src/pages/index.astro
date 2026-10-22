@@ -1,0 +1,26 @@
+---
+import Base from "../layouts/Base.astro";
+import Hero from "../components/Hero.astro";
+import BrandPromise from "../components/BrandPromise.astro";
+import Destinations from "../components/Destinations.astro";
+import CruiseTypes from "../components/CruiseTypes.astro";
+import CrewExtras from "../components/CrewExtras.astro";
+import Voyage from "../components/Voyage.astro";
+import Process from "../components/Process.astro";
+import Inquiry from "../components/Inquiry.astro";
+---
+
+<Base
+  title="Kilwater - czarter jachtów z załogą w Chorwacji, Grecji, Włoszech i na Mazurach"
+  description="Jachty żaglowe, katamarany i jachty motorowe z załogą albo bez. Jeden broker Kilwater dobiera jacht, załogę i dodatki, od pomysłu do ostatniego dnia rejsu."
+>
+  <Hero />
+  <Voyage>
+    <BrandPromise />
+    <Destinations />
+    <CruiseTypes />
+    <CrewExtras />
+  </Voyage>
+  <Process />
+  <Inquiry />
+</Base>

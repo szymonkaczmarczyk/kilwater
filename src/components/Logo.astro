@@ -1,0 +1,41 @@
+---
+import { logoMark } from "../data/logo-mark";
+
+interface Props {
+  withWordmark?: boolean;
+  class?: string;
+}
+
+const { withWordmark = true, class: className } = Astro.props;
+---
+
+<span class:list={["logo", className]}>
+  <svg class="logo__sign" viewBox={logoMark.viewBox} fill="none" aria-hidden="true">
+    <ellipse {...logoMark.oval} stroke="currentColor" stroke-width="1.1" />
+    <path d={logoMark.wake} stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+    <path d={logoMark.hull} fill="currentColor" />
+    <path d={logoMark.sail} fill="currentColor" />
+  </svg>
+  {withWordmark && <span class="logo__wordmark">Kilwater</span>}
+</span>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .logo__sign {
+    width: 20px;
+    height: 28px;
+  }
+
+  .logo__wordmark {
+    font-family: var(--font-display);
+    font-weight: var(--weight-regular);
+    font-size: 15px;
+    letter-spacing: var(--tracking-wordmark);
+    text-transform: uppercase;
+  }
+</style>

@@ -1,0 +1,65 @@
+---
+import "@fontsource-variable/jost";
+import "@fontsource-variable/dm-sans";
+import "../styles/tokens.css";
+import "../styles/global.css";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import jostLatin from "@fontsource-variable/jost/files/jost-latin-wght-normal.woff2?url";
+import jostLatinExt from "@fontsource-variable/jost/files/jost-latin-ext-wght-normal.woff2?url";
+
+interface Props {
+  title: string;
+  description: string;
+  solidNav?: boolean;
+  noindex?: boolean;
+}
+
+const { title, description, solidNav = false, noindex = false } = Astro.props;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
+const ogImageUrl = new URL("/og-image.jpg", Astro.site);
+---
+
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f2ea" />
+    <link rel="preload" href={jostLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={jostLatinExt} as="font" type="font/woff2" crossorigin />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex ? <meta name="robots" content="noindex, follow" /> : <link rel="canonical" href={canonicalUrl} />}
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap.xml" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pl_PL" />
+    <meta property="og:site_name" content="Kilwater" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Kilwater, czarter jachtów z załogą. Biały jacht żaglowy na granatowym morzu w łukowym kadrze." />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <a class="skip-link" href="#tresc">Przejdź do treści</a>
+    <Nav solid={solidNav} />
+    <main id="tresc">
+      <slot />
+    </main>
+    <Footer />
+    <script>
+      import { startAnchorNavigation, startSmoothScroll } from "../scripts/motion";
+      import { startScrollReveals } from "../scripts/reveal";
+      startAnchorNavigation();
+      startSmoothScroll();
+      startScrollReveals();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,931 @@
+---
+import LineIcon from "./LineIcon.astro";
+import { company } from "../data/company";
+import {
+  cruiseOptions,
+  destinationOptions,
+  extraOptions,
+  guestLimits,
+  messageMaxLength,
+  nightOptions,
+} from "../data/inquiry-options";
+---
+
+<section class="inquiry" id="zapytanie" aria-labelledby="inquiry-title">
+  <div class="inquiry__inner">
+    <header class="inquiry__intro">
+      <p class="label">Zapytanie</p>
+      <h2 id="inquiry-title" class="section-title">Zaplanuj rejs</h2>
+      <p class="inquiry__lead">
+        Opisz rejs w kilku polach. Broker przygotuje propozycję jachtów, trasy i załogi, a potem dopasuje ją do Twoich uwag.
+      </p>
+      <ul class="inquiry__notes">
+        <li>Zapytanie nic nie kosztuje i do niczego nie zobowiązuje.</li>
+        <li>Wystarczy przybliżony termin, szczegóły ustalimy w rozmowie.</li>
+        <li>Wolisz napisać? <a class="inquiry__mail" href={`mailto:${company.email}`}>{company.email}</a></li>
+      </ul>
+    </header>
+
+    <div class="inquiry__panel">
+      <form class="form" novalidate data-inquiry-form>
+        <div class="form__alert" role="alert" hidden data-form-alert>
+          <svg viewBox="0 0 20 20" width="20" height="20" fill="none" aria-hidden="true">
+            <circle cx="10" cy="10" r="8.5" stroke="currentColor" />
+            <path d="M10 5.5v5.5M10 13.5v.5" stroke="currentColor" stroke-linecap="round" />
+          </svg>
+          <p data-form-alert-text></p>
+        </div>
+
+        <fieldset class="form__group">
+          <legend class="form__legend"><span>01</span> Twój rejs</legend>
+
+          <div class="form__grid">
+            <div class="field">
+              <label class="field__label" for="destination">Akwen</label>
+              <select class="field__control" id="destination" name="destination" required aria-describedby="destination-error">
+                <option value="" selected disabled>Wybierz akwen</option>
+                {destinationOptions.map((option) => <option value={option.value}>{option.label}</option>)}
+              </select>
+              <p class="field__error" id="destination-error" data-error-for="destination"></p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="startDate">Data wypłynięcia</label>
+              <input class="field__control" type="date" id="startDate" name="startDate" required aria-describedby="startDate-error" data-min-today />
+              <p class="field__error" id="startDate-error" data-error-for="startDate"></p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="nights">Długość rejsu</label>
+              <select class="field__control" id="nights" name="nights" required aria-describedby="nights-error">
+                {nightOptions.map((option) => <option value={option.value} selected={option.value === "7"}>{option.label}</option>)}
+              </select>
+              <p class="field__error" id="nights-error" data-error-for="nights"></p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="guests">Liczba osób</label>
+              <div class="stepper">
+                <button class="stepper__button" type="button" aria-label="Mniej osób" data-step="-1">−</button>
+                <input
+                  class="field__control stepper__input"
+                  type="number"
+                  inputmode="numeric"
+                  id="guests"
+                  name="guests"
+                  value="4"
+                  min={guestLimits.min}
+                  max={guestLimits.max}
+                  required
+                  aria-describedby="guests-error"
+                />
+                <button class="stepper__button" type="button" aria-label="Więcej osób" data-step="1">+</button>
+              </div>
+              <p class="field__error" id="guests-error" data-error-for="guests"></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <p class="field__label" id="cruiseType-label">Rodzaj rejsu</p>
+            <div class="choice-grid" role="radiogroup" aria-labelledby="cruiseType-label" aria-describedby="cruiseType-error">
+              {cruiseOptions.map((option) => (
+                <label class="choice">
+                  <input class="choice__input" type="radio" name="cruiseType" value={option.value} required />
+                  <LineIcon name={option.icon} class="choice__icon" />
+                  <span class="choice__label">{option.label}</span>
+                  <span class="choice__hint">{option.hint}</span>
+                </label>
+              ))}
+            </div>
+            <p class="field__error" id="cruiseType-error" data-error-for="cruiseType"></p>
+          </div>
+
+          <div class="field">
+            <p class="field__label" id="extras-label">Dodatki <span class="field__optional">opcjonalnie</span></p>
+            <div class="chip-list" role="group" aria-labelledby="extras-label">
+              {extraOptions.map((option) => (
+                <label class="chip">
+                  <input class="chip__input" type="checkbox" name="extras" value={option.value} />
+                  <span class="chip__box" aria-hidden="true">
+                    <svg viewBox="0 0 12 12" width="12" height="12" fill="none">
+                      <path d="M2.5 6.5L5 9L9.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="form__group">
+          <legend class="form__legend"><span>02</span> Kontakt</legend>
+
+          <div class="form__grid">
+            <div class="field">
+              <label class="field__label" for="name">Imię i nazwisko</label>
+              <input class="field__control" type="text" id="name" name="name" autocomplete="name" required maxlength="120" aria-describedby="name-error" />
+              <p class="field__error" id="name-error" data-error-for="name"></p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="email">E-mail</label>
+              <input class="field__control" type="email" id="email" name="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" required maxlength="200" aria-describedby="email-error" />
+              <p class="field__error" id="email-error" data-error-for="email"></p>
+            </div>
+
+            <div class="field field--wide">
+              <label class="field__label" for="phone">Telefon <span class="field__optional">opcjonalnie</span></label>
+              <input class="field__control" type="tel" id="phone" name="phone" autocomplete="tel" inputmode="tel" maxlength="30" placeholder="+48 600 000 000" aria-describedby="phone-error" />
+              <p class="field__error" id="phone-error" data-error-for="phone"></p>
+            </div>
+
+            <div class="field field--wide">
+              <label class="field__label" for="message">Wiadomość <span class="field__optional">opcjonalnie</span></label>
+              <textarea
+                class="field__control field__control--area"
+                id="message"
+                name="message"
+                rows="4"
+                maxlength={messageMaxLength}
+                placeholder="Np. rocznica ślubu, dzieci w wieku 6 i 9 lat, chcemy dużo kąpieli i mało przelotów."
+                aria-describedby="message-error message-count"
+              ></textarea>
+              <p class="field__count" id="message-count" data-message-count>0 / {messageMaxLength}</p>
+              <p class="field__error" id="message-error" data-error-for="message"></p>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="consent">
+              <input class="consent__input" type="checkbox" name="consent" required aria-describedby="consent-error" />
+              <span class="chip__box consent__box" aria-hidden="true">
+                <svg viewBox="0 0 12 12" width="12" height="12" fill="none">
+                  <path d="M2.5 6.5L5 9L9.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <span>
+                Akceptuję <a href="/regulamin">regulamin</a>. Moje dane posłużą do przygotowania oferty rejsu zgodnie z <a href="/polityka-prywatnosci">polityką prywatności</a>.
+              </span>
+            </label>
+            <p class="field__error" id="consent-error" data-error-for="consent"></p>
+          </div>
+        </fieldset>
+
+        <div class="form__trap" aria-hidden="true">
+          <label for="website">Nie wypełniaj tego pola</label>
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <div class="form__submit">
+          <button class="button form__button" type="submit" data-form-submit>
+            <span data-submit-label>Wyślij zapytanie</span>
+            <span class="button__arrow" aria-hidden="true">→</span>
+          </button>
+          <p class="form__shortcut"><kbd data-shortcut-key>Ctrl</kbd> + <kbd>Enter</kbd> wysyła formularz</p>
+        </div>
+      </form>
+
+      <div class="success" role="status" hidden tabindex="-1" data-form-success>
+        <svg class="success__icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <circle cx="24" cy="24" r="22.5" stroke="currentColor" />
+          <path d="M15 24.5L21.5 31L33.5 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <h3 class="success__title">Zapytanie wysłane</h3>
+        <p class="success__text" data-success-text>Broker odezwie się na podany adres e-mail z propozycją rejsu.</p>
+        <button class="link-underline" type="button" data-form-again>Wyślij kolejne zapytanie</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { guestLimits, messageMaxLength } from "../data/inquiry-options";
+  import { navigationEvent } from "../scripts/motion";
+
+  type FieldErrors = Record<string, string>;
+
+  const form = document.querySelector<HTMLFormElement>("[data-inquiry-form]");
+  const success = document.querySelector<HTMLElement>("[data-form-success]");
+  const alertBox = document.querySelector<HTMLElement>("[data-form-alert]");
+  const alertText = document.querySelector<HTMLElement>("[data-form-alert-text]");
+  const submitButton = document.querySelector<HTMLButtonElement>("[data-form-submit]");
+  const submitLabel = document.querySelector<HTMLElement>("[data-submit-label]");
+  const messageCount = document.querySelector<HTMLElement>("[data-message-count]");
+
+  const todayIso = () => {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  };
+
+  const readForm = (target: HTMLFormElement) => {
+    const data = new FormData(target);
+    return {
+      destination: String(data.get("destination") ?? ""),
+      startDate: String(data.get("startDate") ?? ""),
+      nights: String(data.get("nights") ?? ""),
+      guests: Number(data.get("guests")),
+      cruiseType: String(data.get("cruiseType") ?? ""),
+      extras: data.getAll("extras").map(String),
+      name: String(data.get("name") ?? "").trim(),
+      email: String(data.get("email") ?? "").trim(),
+      phone: String(data.get("phone") ?? "").trim(),
+      message: String(data.get("message") ?? "").trim(),
+      consent: data.get("consent") === "on",
+      website: String(data.get("website") ?? ""),
+    };
+  };
+
+  const validate = (values: ReturnType<typeof readForm>): FieldErrors => {
+    const errors: FieldErrors = {};
+    if (!values.destination) errors.destination = "Wybierz akwen albo „Jeszcze nie wiem”.";
+    if (!values.startDate) errors.startDate = "Podaj datę wypłynięcia.";
+    else if (values.startDate < todayIso()) errors.startDate = "Data wypłynięcia nie może być w przeszłości.";
+    if (!Number.isInteger(values.guests) || values.guests < guestLimits.min || values.guests > guestLimits.max) {
+      errors.guests = `Podaj od ${guestLimits.min} do ${guestLimits.max} osób.`;
+    }
+    if (!values.cruiseType) errors.cruiseType = "Wybierz rodzaj rejsu.";
+    if (values.name.length < 2) errors.name = "Podaj imię i nazwisko.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(values.email)) errors.email = "Podaj poprawny adres e-mail, np. jan@przyklad.pl.";
+    if (values.phone && !/^\+?[0-9 ()-]{7,}$/.test(values.phone)) {
+      errors.phone = "Podaj numer w formacie +48 600 000 000 albo zostaw puste.";
+    }
+    if (values.message.length > messageMaxLength) errors.message = `Wiadomość może mieć maksymalnie ${messageMaxLength} znaków.`;
+    if (!values.consent) errors.consent = "Zaznacz akceptację regulaminu, żebyśmy mogli przygotować ofertę.";
+    return errors;
+  };
+
+  const showErrors = (target: HTMLFormElement, errors: FieldErrors) => {
+    target.querySelectorAll<HTMLElement>("[data-error-for]").forEach((errorElement) => {
+      const field = errorElement.dataset.errorFor!;
+      const message = errors[field] ?? "";
+      errorElement.textContent = message;
+      errorElement.classList.toggle("is-visible", Boolean(message));
+      target.querySelectorAll<HTMLElement>(`[name="${field}"]`).forEach((control) => {
+        if (message) control.setAttribute("aria-invalid", "true");
+        else control.removeAttribute("aria-invalid");
+      });
+    });
+    const firstInvalid = target.querySelector<HTMLElement>("[aria-invalid='true']");
+    firstInvalid?.focus();
+  };
+
+  const showAlert = (message: string) => {
+    if (!alertBox || !alertText) return;
+    alertText.textContent = message;
+    alertBox.hidden = !message;
+  };
+
+  const setSending = (isSending: boolean) => {
+    if (!submitButton || !submitLabel) return;
+    submitButton.disabled = isSending;
+    submitButton.classList.toggle("is-sending", isSending);
+    submitLabel.textContent = isSending ? "Wysyłanie…" : "Wyślij zapytanie";
+  };
+
+  const submitInquiry = async (target: HTMLFormElement) => {
+    const values = readForm(target);
+    const errors = validate(values);
+    showAlert("");
+    showErrors(target, errors);
+    if (Object.keys(errors).length) return;
+
+    setSending(true);
+    try {
+      const response = await fetch("/api/zapytanie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        target.hidden = true;
+        if (success) {
+          success.hidden = false;
+          const text = success.querySelector<HTMLElement>("[data-success-text]");
+          if (text) text.textContent = `Dziękujemy, ${values.name.split(" ")[0]}. Broker odezwie się na adres ${values.email} z propozycją rejsu.`;
+          success.focus();
+        }
+        return;
+      }
+      if (response.status === 400 && result.errors) {
+        showErrors(target, result.errors);
+        return;
+      }
+      showAlert(
+        response.status === 429
+          ? "Wysłano zbyt wiele zapytań w krótkim czasie. Odczekaj kilka minut i spróbuj ponownie."
+          : "Nie udało się wysłać zapytania. Spróbuj ponownie za chwilę albo napisz do nas e-mailem.",
+      );
+    } catch {
+      showAlert("Brak połączenia z internetem. Sprawdź połączenie i wyślij zapytanie jeszcze raz.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (form) {
+    const destinationSelect = form.querySelector<HTMLSelectElement>("#destination");
+    const applyDestinationFromUrl = () => {
+      const presetDestination = new URLSearchParams(window.location.search).get("akwen");
+      if (presetDestination && destinationSelect?.querySelector(`option[value="${CSS.escape(presetDestination)}"]`)) {
+        destinationSelect.value = presetDestination;
+      }
+    };
+    applyDestinationFromUrl();
+    window.addEventListener(navigationEvent, applyDestinationFromUrl);
+
+    const dateInput = form.querySelector<HTMLInputElement>("[data-min-today]");
+    if (dateInput) dateInput.min = todayIso();
+
+    const guestsInput = form.querySelector<HTMLInputElement>("#guests");
+    form.querySelectorAll<HTMLButtonElement>("[data-step]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!guestsInput) return;
+        const next = Number(guestsInput.value || 0) + Number(button.dataset.step);
+        guestsInput.value = String(Math.min(guestLimits.max, Math.max(guestLimits.min, next)));
+      });
+    });
+
+    const messageInput = form.querySelector<HTMLTextAreaElement>("#message");
+    messageInput?.addEventListener("input", () => {
+      if (messageCount) messageCount.textContent = `${messageInput.value.length} / ${messageMaxLength}`;
+    });
+
+    const shortcutKey = form.querySelector<HTMLElement>("[data-shortcut-key]");
+    if (shortcutKey && /Mac|iPhone|iPad/.test(navigator.platform)) shortcutKey.textContent = "⌘";
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      submitInquiry(form);
+    });
+
+    form.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    form.addEventListener("change", (event) => {
+      const control = event.target as HTMLInputElement;
+      if (control.getAttribute("aria-invalid") !== "true") return;
+      const errors = validate(readForm(form));
+      if (!errors[control.name]) {
+        control.removeAttribute("aria-invalid");
+        const errorElement = form.querySelector<HTMLElement>(`[data-error-for="${control.name}"]`);
+        if (errorElement) {
+          errorElement.textContent = "";
+          errorElement.classList.remove("is-visible");
+        }
+        form.querySelectorAll(`[name="${control.name}"]`).forEach((sibling) => sibling.removeAttribute("aria-invalid"));
+      }
+    });
+
+    document.querySelector("[data-form-again]")?.addEventListener("click", () => {
+      form.reset();
+      if (messageCount) messageCount.textContent = `0 / ${messageMaxLength}`;
+      if (success) success.hidden = true;
+      form.hidden = false;
+      form.querySelector<HTMLElement>("#destination")?.focus();
+    });
+  }
+</script>
+
+<style>
+  .inquiry {
+    position: relative;
+    background: var(--surface-deep);
+    color: var(--text-on-deep);
+    padding: var(--space-9) var(--gutter);
+  }
+
+  .inquiry__inner {
+    display: grid;
+    gap: var(--space-8);
+    max-width: var(--page-max);
+    margin: 0 auto;
+  }
+
+  .inquiry__intro {
+    display: grid;
+    align-content: start;
+    gap: var(--space-5);
+  }
+
+  .inquiry__intro .label {
+    color: var(--text-on-deep-muted);
+  }
+
+  .inquiry__lead {
+    max-width: 42ch;
+    font-size: var(--size-body-large);
+    color: var(--text-on-deep-muted);
+  }
+
+  .inquiry__notes {
+    display: grid;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line-on-deep);
+  }
+
+  .inquiry__notes li {
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--line-on-deep);
+    font-size: var(--size-small);
+    color: var(--text-on-deep-muted);
+  }
+
+  .inquiry__mail {
+    color: var(--color-brass-300);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .form {
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  .form[hidden],
+  .success[hidden] {
+    display: none;
+  }
+
+  .form__alert {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--danger-on-deep);
+    border-radius: var(--radius-sm);
+    color: var(--danger-on-deep);
+    font-size: var(--size-small);
+  }
+
+  .form__alert[hidden] {
+    display: none;
+  }
+
+  .form__alert svg {
+    flex: none;
+  }
+
+  .form__group {
+    display: grid;
+    gap: var(--space-6);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  .form__legend {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    width: 100%;
+    margin-bottom: var(--space-2);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--line-on-deep);
+    font-family: var(--font-display);
+    font-size: var(--size-h4);
+    font-weight: var(--weight-regular);
+    letter-spacing: var(--tracking-display-caps);
+    text-transform: uppercase;
+  }
+
+  .form__legend span {
+    font-family: var(--font-body);
+    font-size: var(--size-label);
+    letter-spacing: var(--tracking-label);
+    color: var(--color-brass-300);
+  }
+
+  .form__grid {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .field {
+    display: grid;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .field__label {
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-on-deep-muted);
+  }
+
+  .field__optional {
+    margin-left: var(--space-2);
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: color-mix(in srgb, var(--text-on-deep) 45%, transparent);
+  }
+
+  .field__control {
+    width: 100%;
+    min-height: 48px;
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line-on-deep);
+    border-radius: var(--radius-sm);
+    background: var(--field-on-deep);
+    color: var(--text-on-deep);
+    font: inherit;
+    font-size: var(--size-body);
+    letter-spacing: var(--tracking-body);
+    color-scheme: dark;
+    transition: border-color var(--duration-fast) var(--ease-out);
+  }
+
+  .field__control::placeholder {
+    color: color-mix(in srgb, var(--text-on-deep) 40%, transparent);
+  }
+
+  .field__control:hover {
+    border-color: color-mix(in srgb, var(--text-on-deep) 50%, transparent);
+  }
+
+  .field__control:focus-visible {
+    outline: none;
+    border-color: var(--color-brass-300);
+    box-shadow: 0 0 0 1px var(--color-brass-300);
+  }
+
+  .field__control[aria-invalid="true"] {
+    border-color: var(--danger-on-deep);
+  }
+
+  select.field__control {
+    appearance: none;
+    padding-right: var(--space-7);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%23d4b98a' stroke-width='1.2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--space-4) center;
+  }
+
+  select.field__control option {
+    background: var(--color-navy-900);
+    color: var(--text-on-deep);
+  }
+
+  .field__control--area {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .field__count {
+    justify-self: end;
+    font-size: var(--size-label);
+    color: color-mix(in srgb, var(--text-on-deep) 45%, transparent);
+  }
+
+  .field__error {
+    display: none;
+    align-items: flex-start;
+    gap: var(--space-2);
+    font-size: var(--size-small);
+    color: var(--danger-on-deep);
+  }
+
+  .field__error.is-visible {
+    display: flex;
+  }
+
+  .field__error.is-visible::before {
+    content: "";
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    background: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Ccircle cx='8' cy='8' r='7' stroke='black' stroke-width='1.2'/%3E%3Cpath d='M8 4.5v4.5M8 11v.5' stroke='black' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  .stepper {
+    display: grid;
+    grid-template-columns: 48px 1fr 48px;
+    border: 1px solid var(--line-on-deep);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .stepper__button {
+    min-height: 48px;
+    font-size: 20px;
+    color: var(--color-brass-300);
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .stepper__input {
+    border: 0;
+    border-inline: 1px solid var(--line-on-deep);
+    border-radius: 0;
+    text-align: center;
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  .stepper__input::-webkit-inner-spin-button,
+  .stepper__input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .choice-grid {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .choice {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-4);
+    border: 1px solid var(--line-on-deep);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition:
+      border-color var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .choice__input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .choice :global(.choice__icon) {
+    grid-row: span 2;
+    color: var(--color-brass-300);
+  }
+
+  .choice__label {
+    font-weight: var(--weight-medium);
+  }
+
+  .choice__hint {
+    font-size: var(--size-small);
+    color: var(--text-on-deep-muted);
+  }
+
+  .choice:has(.choice__input:checked) {
+    border-color: var(--color-brass-300);
+    background: var(--color-navy-700);
+  }
+
+  .choice:has(.choice__input:focus-visible) {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
+
+  .choice:has(.choice__input[aria-invalid="true"]) {
+    border-color: var(--danger-on-deep);
+  }
+
+  .chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--hit-target);
+    padding: 0 var(--space-4);
+    border: 1px solid var(--line-on-deep);
+    border-radius: var(--radius-sm);
+    font-size: var(--size-small);
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-out);
+  }
+
+  .chip__input,
+  .consent__input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .chip__box {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--line-on-deep);
+    border-radius: var(--radius-sm);
+    color: var(--color-navy-900);
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+  }
+
+  .chip__box svg {
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .chip:has(.chip__input:checked),
+  .consent:has(.consent__input:checked) .chip__box {
+    border-color: var(--color-brass-300);
+  }
+
+  .chip:has(.chip__input:checked) .chip__box,
+  .consent:has(.consent__input:checked) .chip__box {
+    background: var(--color-brass-300);
+  }
+
+  .chip:has(.chip__input:checked) .chip__box svg,
+  .consent:has(.consent__input:checked) .chip__box svg {
+    opacity: 1;
+  }
+
+  .chip:has(.chip__input:focus-visible),
+  .consent:has(.consent__input:focus-visible) .chip__box {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
+
+  .consent {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    min-height: var(--hit-target);
+    padding-top: var(--space-2);
+    font-size: var(--size-small);
+    color: var(--text-on-deep-muted);
+    cursor: pointer;
+  }
+
+  .consent__box {
+    margin-top: 2px;
+  }
+
+  .consent:has(.consent__input[aria-invalid="true"]) .consent__box {
+    border-color: var(--danger-on-deep);
+  }
+
+  .consent a {
+    color: var(--text-on-deep);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .form__trap {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .form__submit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .form__button {
+    min-height: 52px;
+    padding: 0 var(--space-6);
+    background: var(--text-on-deep);
+    border-color: var(--text-on-deep);
+    color: var(--text-strong);
+  }
+
+  .form__button:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+
+  .form__button.is-sending .button__arrow {
+    animation: sending 900ms var(--ease-out) infinite;
+  }
+
+  .form__shortcut {
+    font-size: var(--size-label);
+    color: var(--text-on-deep-muted);
+  }
+
+  .form__shortcut kbd {
+    padding: 2px 6px;
+    border: 1px solid var(--line-on-deep);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: var(--size-label);
+  }
+
+  .success {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-4);
+    padding: var(--space-7) 0;
+    outline: none;
+  }
+
+  .success__icon {
+    width: 48px;
+    height: 48px;
+    color: var(--success-on-deep);
+  }
+
+  .success__title {
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    letter-spacing: var(--tracking-display-caps);
+    text-transform: uppercase;
+  }
+
+  .success__text {
+    max-width: 44ch;
+    color: var(--text-on-deep-muted);
+  }
+
+  @keyframes sending {
+    50% {
+      transform: translateX(6px);
+    }
+  }
+
+  @media (hover: hover) {
+    .stepper__button:hover {
+      background: var(--color-navy-700);
+    }
+
+    .choice:hover,
+    .chip:hover {
+      border-color: color-mix(in srgb, var(--text-on-deep) 60%, transparent);
+    }
+
+    .form__button:not(:disabled):hover {
+      background: var(--color-sand-200);
+      border-color: var(--color-sand-200);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .form__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--space-5);
+    }
+
+    .field--wide {
+      grid-column: 1 / -1;
+    }
+
+    .choice-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .choice {
+      grid-template-columns: 1fr;
+      row-gap: var(--space-1);
+      align-content: start;
+    }
+
+    .choice :global(.choice__icon) {
+      grid-row: auto;
+      margin-bottom: var(--space-2);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .inquiry {
+      padding-block: var(--space-10);
+    }
+
+    .inquiry__inner {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+    }
+
+    .inquiry__intro {
+      grid-column: 1 / span 4;
+      position: sticky;
+      top: calc(var(--nav-height) + var(--space-6));
+      align-self: start;
+    }
+
+    .inquiry__panel {
+      grid-column: 6 / span 7;
+    }
+  }
+</style>

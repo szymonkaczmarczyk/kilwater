@@ -1,0 +1,245 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: var(--nav-height);
+}
+
+a,
+button,
+label,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-strong);
+  font-family: var(--font-body);
+  font-size: var(--size-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 100;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-deep);
+  color: var(--text-on-deep);
+  font-size: var(--size-small);
+  transform: translateY(-200%);
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.skip-link:focus-visible {
+  transform: none;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-body);
+  font-size: var(--size-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.label::before {
+  content: "";
+  width: 32px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: var(--hit-target);
+  padding: 0 var(--space-5);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-size: var(--size-small);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.button--solid {
+  background: var(--surface-deep);
+  border-color: var(--surface-deep);
+  color: var(--text-on-deep);
+}
+
+.button__arrow {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.link-underline {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--hit-target);
+  font-size: var(--size-small);
+  font-weight: var(--weight-medium);
+}
+
+.link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0.35);
+  transform-origin: left;
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .button--solid:hover {
+    background: var(--color-navy-700);
+    border-color: var(--color-navy-700);
+  }
+
+  .button:hover .button__arrow {
+    transform: translateX(4px);
+  }
+
+  .link-underline:hover::after {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html.is-menu-open {
+  overflow: hidden;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: var(--size-h2);
+  font-weight: var(--weight-light);
+  line-height: var(--leading-heading);
+  letter-spacing: -0.04em;
+}
+
+.section-lead {
+  max-width: 48ch;
+  font-size: var(--size-body-large);
+  color: var(--text-muted);
+}
+
+.frame {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  background: var(--surface-raised);
+}
+
+.frame :is(picture, img) {
+  width: 100%;
+  height: 100%;
+}
+
+.frame img {
+  object-fit: cover;
+}
+
+.frame--arch {
+  border-radius: 999px 999px var(--radius-md) var(--radius-md);
+}
+
+.wake-point {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .wake-point--mobile {
+    display: none;
+  }
+}

@@ -1,0 +1,275 @@
+---
+import { Picture } from "astro:assets";
+import croatiaImage from "../assets/photos/akwen-chorwacja.png";
+import greeceImage from "../assets/photos/akwen-grecja.png";
+import italyImage from "../assets/photos/akwen-wlochy.png";
+import masuriaImage from "../assets/photos/akwen-mazury.jpg";
+
+const destinations = [
+  {
+    slug: "chorwacja",
+    name: "Chorwacja",
+    region: "Dalmacja i Kornati",
+    text: "Kamienne miasteczka, mariny co kilka mil i zatoki na noc pod sosnami. Krótkie przeloty sprawiają, że to dobry wybór na pierwszy rejs.",
+    image: croatiaImage,
+    alt: "Kamienny port w Dalmacji o zachodzie słońca, drewniane jachty żaglowe zacumowane rufą do nabrzeża, w tle dzwonnica i góry",
+    focus: "50% 60%",
+  },
+  {
+    slug: "grecja",
+    name: "Grecja",
+    region: "Cyklady i Wyspy Jońskie",
+    text: "Białe klify, turkusowe zatoki i meltemi, który na Cykladach daje żeglarzom prawdziwą frajdę. Na Morzu Jońskim spokojniej i bardziej zielono.",
+    image: greeceImage,
+    alt: "Biały katamaran na kotwicy w turkusowej zatoce otoczonej jasnymi wapiennymi klifami na greckiej wyspie",
+    focus: "38% 50%",
+  },
+  {
+    slug: "wlochy",
+    name: "Włochy",
+    region: "Wybrzeże Amalfi, Sardynia, Sycylia",
+    text: "Wybrzeże, które najlepiej wygląda od strony morza, i kuchnia, która sama w sobie jest powodem rejsu. Dobre na jacht motorowy.",
+    image: italyImage,
+    alt: "Klasyczny jacht motorowy z mahoniowym pokładem płynie przed kolorowym miasteczkiem na klifach Wybrzeża Amalfi",
+    focus: "42% 50%",
+  },
+  {
+    slug: "mazury",
+    name: "Mazury",
+    region: "Wielkie Jeziora Mazurskie",
+    text: "Rejs bez lotu i bez fali. Mgła o świcie, trzciny, ciche zatoki i wieczory przy kei. Najprostszy sposób, żeby sprawdzić, czy żagle są dla Ciebie.",
+    image: masuriaImage,
+    alt: "Drewniana żaglówka z kremowymi żaglami sunie przez poranną mgłę na mazurskim jeziorze, na pierwszym planie złote trzciny",
+    focus: "50% 45%",
+  },
+];
+---
+
+<section class="destinations" id="akweny" aria-labelledby="destinations-title">
+  <div class="destinations__inner">
+    <header class="destinations__head">
+      <p class="label">Akweny</p>
+      <h2 id="destinations-title" class="section-title">Cztery wody,<br />cztery rytmy rejsu</h2>
+      <p class="section-lead">
+        Każdy akwen pływa się inaczej. Pomożemy wybrać ten, który pasuje do Twojej załogi, terminu i doświadczenia.
+      </p>
+    </header>
+
+    <ol class="destinations__list">
+      {destinations.map((destination, index) => (
+        <li class={`destination destination--${destination.slug}`} data-reveal>
+          <figure class="frame frame--arch destination__frame">
+            <Picture
+              src={destination.image}
+              alt={destination.alt}
+              formats={["avif", "webp"]}
+              fallbackFormat="jpg"
+              widths={[480, 800, 1280]}
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              style={`object-position: ${destination.focus}`}
+              data-parallax
+            />
+          </figure>
+          <div class="destination__copy">
+            <span
+              class:list={["wake-point", "destination__wake-start", { "wake-point--mobile": destination.slug === "wlochy" }]}
+              data-wake-point
+              aria-hidden="true"
+            ></span>
+            <p class="destination__index">{String(index + 1).padStart(2, "0")}</p>
+            <h3 class="destination__name">{destination.name}</h3>
+            <p class="destination__region">{destination.region}</p>
+            <p class="destination__text">{destination.text}</p>
+            <a class="link-underline" href={`/?akwen=${destination.slug}#zapytanie`}>
+              Zapytaj o rejs: {destination.name}
+              <span class="button__arrow" aria-hidden="true">&nbsp;→</span>
+            </a>
+            <span class="wake-point wake-point--mobile destination__wake-end" data-wake-point aria-hidden="true"></span>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+
+<style>
+  .destinations {
+    position: relative;
+    background: var(--surface-page);
+    padding: var(--space-9) var(--gutter);
+  }
+
+  .destinations__inner {
+    position: relative;
+    z-index: 2;
+    max-width: var(--page-max);
+    margin: 0 auto;
+  }
+
+  .destinations__head {
+    display: grid;
+    gap: var(--space-5);
+    margin-bottom: var(--space-8);
+  }
+
+  .destinations__head .label {
+    color: var(--text-muted);
+  }
+
+  .destinations__list {
+    display: grid;
+    gap: var(--space-9);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .destination {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .destination__frame {
+    aspect-ratio: 4 / 5;
+  }
+
+  .destination--chorwacja .destination__frame {
+    aspect-ratio: 5 / 4;
+  }
+
+  .destination__copy {
+    position: relative;
+    display: grid;
+    gap: var(--space-3);
+    max-width: 44ch;
+  }
+
+  .destination__index {
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    color: var(--accent);
+  }
+
+  .destination__name {
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: var(--tracking-display-caps);
+    text-transform: uppercase;
+  }
+
+  .destination__region {
+    font-size: var(--size-small);
+    font-weight: var(--weight-medium);
+    color: var(--text-strong);
+  }
+
+  .destination__text {
+    color: var(--text-muted);
+  }
+
+  .destination__copy .wake-point {
+    left: calc(var(--gutter) * -0.5);
+    top: 0;
+  }
+
+  .destination__copy .destination__wake-end {
+    top: auto;
+    bottom: 0;
+  }
+
+  @media (max-width: 1023px) {
+    .destination--grecja .destination__copy .wake-point {
+      right: calc(var(--gutter) * -0.5);
+      left: auto;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .destinations {
+      padding-block: var(--space-10);
+    }
+
+    .destinations__head {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+      align-items: end;
+      margin-bottom: var(--space-9);
+    }
+
+    .destinations__head .label {
+      grid-column: 1 / -1;
+    }
+
+    .destinations__head .section-title {
+      grid-column: 1 / span 7;
+    }
+
+    .destinations__head .section-lead {
+      grid-column: 9 / span 4;
+    }
+
+    .destinations__list {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+      row-gap: var(--space-10);
+    }
+
+    .destination {
+      align-items: end;
+      gap: var(--space-6);
+    }
+
+    .destination--chorwacja {
+      grid-column: 1 / -1;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+    }
+
+    .destination--chorwacja .destination__frame {
+      grid-column: 1 / span 8;
+      aspect-ratio: 16 / 10;
+    }
+
+    .destination--chorwacja .destination__copy {
+      grid-column: 9 / span 4;
+    }
+
+    .destination--grecja {
+      grid-column: 1 / span 5;
+    }
+
+    .destination--wlochy {
+      grid-column: 7 / span 6;
+      margin-top: var(--space-10);
+    }
+
+    .destination--wlochy .destination__frame {
+      aspect-ratio: 5 / 6;
+    }
+
+    .destination--mazury {
+      grid-column: 1 / -1;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+    }
+
+    .destination--mazury .destination__copy {
+      grid-column: 2 / span 4;
+      grid-row: 1;
+      align-self: center;
+    }
+
+    .destination--mazury .destination__frame {
+      grid-column: 7 / span 6;
+      grid-row: 1;
+      aspect-ratio: 4 / 5;
+    }
+
+    .destination__copy .wake-point {
+      left: calc(var(--space-5) * -1.5);
+    }
+  }
+</style>

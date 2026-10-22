@@ -1,0 +1,253 @@
+---
+const steps = [
+  {
+    title: "Opowiedz o rejsie",
+    text: "Wypełniasz krótki formularz: akwen, termin, liczba osób i rodzaj rejsu. Wystarczy szkic, resztę dopytamy.",
+  },
+  {
+    title: "Rozmowa z brokerem",
+    text: "Twój broker oddzwania, poznaje załogę i oczekiwania. Od tej chwili rozmawiasz z jedną osobą.",
+  },
+  {
+    title: "Wybrane jachty i trasa",
+    text: "Dostajesz krótką listę sprawdzonych jachtów z propozycją trasy, załogi i dodatków. Zmieniamy, aż wszystko pasuje.",
+  },
+  {
+    title: "Rezerwacja i wypłynięcie",
+    text: "Podpisujesz umowę, my zajmujemy się dokumentami, odprawą i zaopatrzeniem. Ty pakujesz tylko torbę.",
+  },
+];
+---
+
+<section class="process" id="jak-to-dziala" aria-labelledby="process-title" data-process>
+  <div class="process__inner">
+    <header class="process__head">
+      <p class="label">Jak to działa</p>
+      <h2 id="process-title" class="section-title">Od pierwszej wiadomości<br />do odbioru jachtu</h2>
+    </header>
+
+    <div class="process__timeline">
+      <span class="process__track" aria-hidden="true">
+        <span class="process__track-fill" data-process-fill></span>
+      </span>
+      <ol class="process__steps">
+      {steps.map((step, index) => (
+        <li class="step" data-process-step>
+          <span class="step__marker" aria-hidden="true">
+            <span class="step__dot"></span>
+          </span>
+          <p class="step__index">{String(index + 1).padStart(2, "0")}</p>
+          <h3 class="step__title">{step.title}</h3>
+          <p class="step__text">{step.text}</p>
+        </li>
+      ))}
+      </ol>
+    </div>
+
+    <a class="button button--solid" href="#zapytanie">
+      Zacznij od formularza
+      <span class="button__arrow" aria-hidden="true">→</span>
+    </a>
+  </div>
+</section>
+
+<script>
+  import { gsap, prefersReducedMotion } from "../scripts/motion";
+
+  const process = document.querySelector<HTMLElement>("[data-process]");
+  const timeline = process?.querySelector<HTMLElement>(".process__timeline");
+  const fill = process?.querySelector<HTMLElement>("[data-process-fill]");
+  const steps = process?.querySelectorAll<HTMLElement>("[data-process-step]");
+
+  const markReached = (progress: number) => {
+    steps?.forEach((step, index) => step.classList.toggle("is-reached", progress >= index / steps.length));
+  };
+
+  if (process && timeline && fill && steps?.length) {
+    if (prefersReducedMotion()) {
+      fill.classList.add("is-full");
+      markReached(1);
+    } else {
+      gsap.matchMedia().add(
+        { horizontal: "(min-width: 1024px)", vertical: "(max-width: 1023px)" },
+        (context) => {
+          const axis = context.conditions?.horizontal ? "scaleX" : "scaleY";
+          gsap.fromTo(
+            fill,
+            { [axis]: 0 },
+            {
+              [axis]: 1,
+              ease: "none",
+              scrollTrigger: {
+                trigger: timeline,
+                start: "top 70%",
+                end: context.conditions?.horizontal ? "top 30%" : "bottom 60%",
+                scrub: 0.6,
+                onUpdate: (self) => markReached(self.progress),
+              },
+            },
+          );
+        },
+      );
+    }
+  }
+</script>
+
+<style>
+  .process {
+    position: relative;
+    background: var(--surface-page);
+    padding: var(--space-9) var(--gutter);
+  }
+
+  .process__inner {
+    max-width: var(--page-max);
+    margin: 0 auto;
+  }
+
+  .process__head {
+    display: grid;
+    gap: var(--space-5);
+    margin-bottom: var(--space-8);
+  }
+
+  .process__head .label {
+    color: var(--text-muted);
+  }
+
+  .process__timeline {
+    --marker-size: 28px;
+    position: relative;
+    margin-bottom: var(--space-8);
+    padding-left: calc(var(--marker-size) + var(--space-5));
+  }
+
+  .process__steps {
+    display: grid;
+    gap: var(--space-7);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .process__track {
+    position: absolute;
+    top: calc(var(--marker-size) / 2);
+    bottom: 0;
+    left: calc(var(--marker-size) / 2);
+    width: 1px;
+    background: var(--line-soft);
+  }
+
+  .process__track-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    transform-origin: top;
+  }
+
+  .process__track-fill.is-full {
+    transform: none;
+  }
+
+  .step {
+    position: relative;
+    display: grid;
+    gap: var(--space-3);
+    opacity: 0.45;
+    transition: opacity var(--duration-base) var(--ease-out);
+  }
+
+  .step.is-reached {
+    opacity: 1;
+  }
+
+  .step__marker {
+    position: absolute;
+    top: 0;
+    left: calc((var(--marker-size) + var(--space-5)) * -1);
+    display: grid;
+    place-items: center;
+    width: var(--marker-size);
+    height: var(--marker-size);
+    border: 1px solid var(--line-soft);
+    border-radius: 50%;
+    background: var(--surface-page);
+    transition: border-color var(--duration-base) var(--ease-out);
+  }
+
+  .step__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: scale(0);
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  .step.is-reached .step__marker {
+    border-color: var(--accent);
+  }
+
+  .step.is-reached .step__dot {
+    transform: scale(1);
+  }
+
+  .step__index {
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    color: var(--accent);
+    line-height: var(--marker-size);
+  }
+
+  .step__title {
+    font-family: var(--font-display);
+    font-size: var(--size-h4);
+    font-weight: var(--weight-regular);
+    letter-spacing: var(--tracking-display-caps);
+    text-transform: uppercase;
+  }
+
+  .step__text {
+    max-width: 36ch;
+    color: var(--text-muted);
+  }
+
+  @media (min-width: 1024px) {
+    .process {
+      padding-block: var(--space-10);
+    }
+
+    .process__head {
+      margin-bottom: var(--space-9);
+    }
+
+    .process__timeline {
+      padding: calc(var(--marker-size) + var(--space-5)) 0 0;
+    }
+
+    .process__steps {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      column-gap: var(--space-6);
+    }
+
+    .process__track {
+      top: calc(var(--marker-size) / 2);
+      right: 0;
+      bottom: auto;
+      left: 0;
+      width: auto;
+      height: 1px;
+    }
+
+    .process__track-fill {
+      transform-origin: left;
+    }
+
+    .step__marker {
+      top: calc((var(--marker-size) + var(--space-5)) * -1);
+      left: 0;
+    }
+  }
+</style>
