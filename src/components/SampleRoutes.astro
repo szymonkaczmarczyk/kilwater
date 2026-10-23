@@ -1,6 +1,7 @@
 ---
 import { sampleRoutes, type RouteStop } from "../data/routes";
 import { logoMark } from "../data/logo-mark";
+import routeMaps from "../data/route-maps.json";
 
 const mapWidth = 600;
 const mapHeight = 460;
@@ -37,6 +38,44 @@ const projectRoute = (stops: RouteStop[]) => {
   return { toPoint, latLines, lonLines };
 };
 
+type Ring = number[][];
+const pixelTolerance = 0.6;
+const viewMargin = 24;
+
+const simplifyPoints = (points: Point[]): Point[] => {
+  if (points.length < 3) return points;
+  const start = points[0];
+  const end = points.at(-1)!;
+  const length = Math.hypot(end.x - start.x, end.y - start.y) || 1e-9;
+  let farthest = 0;
+  let farthestIndex = 0;
+  for (let index = 1; index < points.length - 1; index += 1) {
+    const point = points[index];
+    const distance = Math.abs((end.x - start.x) * (start.y - point.y) - (start.x - point.x) * (end.y - start.y)) / length;
+    if (distance > farthest) {
+      farthest = distance;
+      farthestIndex = index;
+    }
+  }
+  if (farthest <= pixelTolerance) return [start, end];
+  return [...simplifyPoints(points.slice(0, farthestIndex + 1)).slice(0, -1), ...simplifyPoints(points.slice(farthestIndex))];
+};
+
+const isVisible = (points: Point[]) =>
+  points.some((point) => point.x > -viewMargin && point.x < mapWidth + viewMargin && point.y > -viewMargin && point.y < mapHeight + viewMargin);
+
+const toPathData = (rings: Ring[], toPoint: (lat: number, lon: number) => Point, closed: boolean) =>
+  rings
+    .map((ring) => ring.map(([lon, lat]) => toPoint(lat, lon)))
+    .filter(isVisible)
+    .map((points) => {
+      const half = Math.floor(points.length / 2);
+      return closed ? [...simplifyPoints(points.slice(0, half + 1)).slice(0, -1), ...simplifyPoints(points.slice(half))] : simplifyPoints(points);
+    })
+    .filter((points) => points.length > (closed ? 3 : 1))
+    .map((points) => `M${points.map((point) => `${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join("L")}${closed ? "Z" : ""}`)
+    .join("");
+
 const labelPlacement = (side: RouteStop["labelSide"] = "right") =>
   ({
     left: { x: -14, y: 4, "text-anchor": "end" },
@@ -45,28 +84,37 @@ const labelPlacement = (side: RouteStop["labelSide"] = "right") =>
     below: { x: 0, y: 28, "text-anchor": "middle" },
   })[side];
 
-const legCurves = (points: Point[]) =>
-  points.slice(0, -1).map((start, index) => {
+const smoothPath = (points: Point[]) => {
+  const format = (point: Point) => `${point.x.toFixed(1)} ${point.y.toFixed(1)}`;
+  const tension = 0.14;
+  const curves = points.slice(0, -1).map((start, index) => {
     const end = points[index + 1];
     const before = points[index - 1] ?? start;
     const after = points[index + 2] ?? end;
-    const tension = 0.18;
     const control1 = { x: start.x + (end.x - before.x) * tension, y: start.y + (end.y - before.y) * tension };
     const control2 = { x: end.x - (after.x - start.x) * tension, y: end.y - (after.y - start.y) * tension };
-    const sameSpot = Math.hypot(end.x - start.x, end.y - start.y) < 1;
-    if (sameSpot) return `M${start.x} ${start.y}`;
-    return `M${start.x.toFixed(1)} ${start.y.toFixed(1)} C${control1.x.toFixed(1)} ${control1.y.toFixed(1)} ${control2.x.toFixed(1)} ${control2.y.toFixed(1)} ${end.x.toFixed(1)} ${end.y.toFixed(1)}`;
+    return `C${format(control1)} ${format(control2)} ${format(end)}`;
   });
+  return `M${format(points[0])} ${curves.join(" ")}`;
+};
 
 const routes = sampleRoutes.map((route) => {
   const { toPoint, latLines, lonLines } = projectRoute(route.stops);
+  const geography = routeMaps[route.slug as keyof typeof routeMaps];
   const points = route.stops.map((stop) => toPoint(stop.lat, stop.lon));
-  const legPaths = legCurves(points);
-  const fullPath = legPaths.map((leg, index) => (index === 0 ? leg : leg.replace(/^M[^C]+/, ""))).join(" ");
+  const legPoints = geography.legs.map((leg) => leg.map(([lon, lat]) => toPoint(lat, lon)));
+  const legPaths = legPoints.map(smoothPath);
+  const fullPath = smoothPath(legPoints.flatMap((leg, index) => (index === 0 ? leg : leg.slice(1))));
   const uniqueStops = route.stops
     .map((stop, index) => ({ ...stop, point: points[index], order: index }))
     .filter((stop, index, all) => all.findIndex((other) => other.name === stop.name) === index);
-  return { ...route, latLines, lonLines, legPaths, fullPath, uniqueStops, home: route.stops[0].name };
+  const map = {
+    isLakeland: geography.water.length > 0,
+    land: toPathData(geography.land, toPoint, true),
+    water: toPathData(geography.water, toPoint, true),
+    waterways: toPathData(geography.waterways, toPoint, false),
+  };
+  return { ...route, latLines, lonLines, legPaths, fullPath, uniqueStops, map, home: route.stops[0].name };
 });
 ---
 
@@ -108,7 +156,13 @@ const routes = sampleRoutes.map((route) => {
         data-route-panel
       >
         <figure class="route__map">
-          <svg viewBox={`0 0 ${mapWidth} ${mapHeight}`} role="img" aria-label={`Schemat trasy: ${route.stops.map((stop) => stop.name).join(", ")}`}>
+          <svg viewBox={`0 0 ${mapWidth} ${mapHeight}`} role="img" aria-label={`Mapa trasy: ${route.stops.map((stop) => stop.name).join(", ")}`}>
+            <g class="route__geography" aria-hidden="true">
+              {route.map.isLakeland && <rect class="route__land" width={mapWidth} height={mapHeight} />}
+              {route.map.land && <path class="route__land route__coast" d={route.map.land} />}
+              {route.map.water && <path class="route__water route__coast" d={route.map.water} />}
+              {route.map.waterways && <path class="route__waterway" d={route.map.waterways} />}
+            </g>
             <g class="route__grid">
               {route.latLines.map((line) => (
                 <g>
@@ -131,7 +185,7 @@ const routes = sampleRoutes.map((route) => {
               <text y="-32">N</text>
             </g>
             <path class="route__trail-base" d={route.fullPath} />
-            <path class="route__trail" d={route.fullPath} data-route-trail />
+            <path class="route__trail" d={route.fullPath} pathLength="1" data-route-trail />
             {route.legPaths.map((leg, legIndex) => (
               <path class="route__leg" d={leg} data-route-leg={legIndex} />
             ))}
@@ -155,7 +209,9 @@ const routes = sampleRoutes.map((route) => {
               </g>
             </g>
           </svg>
-          <figcaption class="route__caption">Schemat trasy, nie mapa nawigacyjna.</figcaption>
+          <figcaption class="route__caption">
+            Mapa poglądowa, nie mapa nawigacyjna. Dane mapy © <a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap</a>.
+          </figcaption>
         </figure>
 
         <div class="route__plan">
@@ -187,37 +243,49 @@ const routes = sampleRoutes.map((route) => {
   const tabs = section ? [...section.querySelectorAll<HTMLButtonElement>("[data-route-tab]")] : [];
   const panels = section ? [...section.querySelectorAll<HTMLElement>("[data-route-panel]")] : [];
   let hasEntered = false;
+  const runningDraws = new WeakMap<SVGPathElement, gsap.core.Tween>();
+
+  const hideTrail = (trail: SVGPathElement) => {
+    trail.style.strokeDasharray = "1";
+    trail.style.strokeDashoffset = "1";
+  };
+
+  const showFullTrail = (trail: SVGPathElement) => {
+    trail.style.strokeDasharray = "none";
+    trail.style.strokeDashoffset = "0";
+  };
 
   const drawRoute = (panel: HTMLElement) => {
     const trail = panel.querySelector<SVGPathElement>("[data-route-trail]");
     const boat = panel.querySelector<SVGGElement>("[data-route-boat]");
     if (!trail || !boat) return;
-    const length = trail.getTotalLength();
-    trail.style.strokeDasharray = String(length);
-    const placeBoat = (drawn: number) => {
-      const point = trail.getPointAtLength(drawn);
-      boat.setAttribute("transform", `translate(${point.x} ${point.y})`);
-    };
+    runningDraws.get(trail)?.kill();
     if (prefersReducedMotion()) {
-      trail.style.strokeDashoffset = "0";
+      showFullTrail(trail);
       boat.style.opacity = "0";
       return;
     }
-    const state = { drawn: 0 };
-    gsap.killTweensOf(state);
+    const length = trail.getTotalLength();
+    const progress = { value: 0 };
+    hideTrail(trail);
     boat.style.opacity = "1";
-    gsap.to(state, {
-      drawn: length,
-      duration: 3.2,
-      ease: "power1.inOut",
-      onUpdate: () => {
-        trail.style.strokeDashoffset = String(length - state.drawn);
-        placeBoat(state.drawn);
-      },
-      onComplete: () => {
-        boat.style.opacity = "0";
-      },
-    });
+    runningDraws.set(
+      trail,
+      gsap.to(progress, {
+        value: 1,
+        duration: 3.2,
+        ease: "power1.inOut",
+        onUpdate: () => {
+          trail.style.strokeDashoffset = String(1 - progress.value);
+          const point = trail.getPointAtLength(length * progress.value);
+          boat.setAttribute("transform", `translate(${point.x} ${point.y})`);
+        },
+        onComplete: () => {
+          showFullTrail(trail);
+          boat.style.opacity = "0";
+        },
+      }),
+    );
   };
 
   const selectTab = (nextTab: HTMLButtonElement, moveFocus = false) => {
@@ -261,7 +329,7 @@ const routes = sampleRoutes.map((route) => {
   if (section && panels.length) {
     panels.forEach((panel) => {
       const trail = panel.querySelector<SVGPathElement>("[data-route-trail]");
-      if (trail) trail.style.strokeDasharray = trail.style.strokeDashoffset = String(trail.getTotalLength());
+      if (trail && !prefersReducedMotion()) hideTrail(trail);
     });
     ScrollTrigger.create({
       trigger: section.querySelector(".route__map") ?? section,
@@ -362,6 +430,28 @@ const routes = sampleRoutes.map((route) => {
     border: 1px solid var(--line-on-deep);
     border-radius: var(--radius-md);
     background: var(--color-navy-950);
+  }
+
+  .route__land {
+    fill: color-mix(in srgb, var(--color-sand-100) 11%, var(--color-navy-950));
+  }
+
+  .route__water {
+    fill: var(--color-navy-950);
+  }
+
+  .route__coast {
+    stroke: color-mix(in srgb, var(--color-brass-300) 38%, transparent);
+    stroke-width: 0.7;
+    stroke-linejoin: round;
+  }
+
+  .route__waterway {
+    fill: none;
+    stroke: var(--color-navy-950);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .route__grid line {
@@ -476,6 +566,12 @@ const routes = sampleRoutes.map((route) => {
     margin-top: var(--space-3);
     font-size: var(--size-label);
     color: var(--text-on-deep-muted);
+  }
+
+  .route__caption a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .route__plan {

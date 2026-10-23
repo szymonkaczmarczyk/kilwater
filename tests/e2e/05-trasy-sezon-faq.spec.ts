@@ -92,3 +92,21 @@ test("FAQ rozwija odpowiedzi i ma dane strukturalne", async ({ page }) => {
   expect(parsed.mainEntity).toHaveLength(10);
   expect(parsed.mainEntity[0].acceptedAnswer.text).toContain("pełną załogą");
 });
+
+test("narysowana trasa zostaje na mapie po animacji na każdej zakładce", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#trasy").scrollIntoViewIfNeeded();
+  const tabs = page.locator("#trasy").getByRole("tab");
+  for (let index = 0; index < 4; index += 1) {
+    await tabs.nth(index).click();
+    const trail = page.locator("[data-route-panel]:not([hidden]) [data-route-trail]");
+    await expect.poll(() => trail.evaluate((path) => getComputedStyle(path).strokeDasharray), { timeout: 6000 }).toBe("none");
+  }
+});
+
+test("akwen w stopce ustawia formularz zapytania", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("[data-footer]").getByRole("link", { name: "Grecja" }).click();
+  await expect(page.locator("#zapytanie")).toBeInViewport();
+  await expect(page.locator("#destination")).toHaveValue("grecja");
+});

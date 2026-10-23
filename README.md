@@ -74,8 +74,9 @@ produkcji bez konfiguracji endpoint zwraca `503`, żeby zapytania nie ginęły p
   mały jacht. Na telefonie przechodzi z boku na bok za zdjęciami.
 - **Akweny** - cztery kadry w układzie 1-2-1, z paralaksą i linkami ustawiającymi akwen w formularzu.
 - **Rodzaje rejsów** - granatowa sekcja z przyklejonym zdjęciem, które zmienia się przy przewijaniu.
-- **Przykładowe trasy** - cztery tygodniowe pętle (Split, Cyklady, Amalfi, Mazury) w zakładkach. Mapa
-  w SVG rysuje się po wejściu w sekcję, a najechanie na dzień planu podświetla odcinek i porty.
+- **Przykładowe trasy** - cztery tygodniowe pętle (Split, Cyklady, Amalfi, Mazury) w zakładkach, na prawdziwej
+  mapie z OpenStreetMap: linie brzegowe, wyspy, jeziora i kanały. Trasa płynie wodą (wyznaczona automatycznie
+  przy budowaniu danych), rysuje się po wejściu w sekcję, a najechanie na dzień planu podświetla odcinek i porty.
   Przycisk „Zapytaj o tę trasę” ustawia akwen i wpisuje trasę do wiadomości w formularzu.
 - **Kalendarz sezonu** - tabela akwenów i miesięcy od kwietnia do października. Kliknięcie pola pokazuje
   opis terminu, wiatr i temperaturę wody, a przycisk ustawia akwen i pierwszą sobotę miesiąca w formularzu.
@@ -85,7 +86,8 @@ produkcji bez konfiguracji endpoint zwraca `503`, żeby zapytania nie ginęły p
   z bazą typowych pytań i pokazuje gotową odpowiedź Kilwater. Gdy jej nie zna, odsyła na e-mail.
 - **Formularz** - karty wyboru, stepper liczby osób, licznik znaków, skrót Ctrl/⌘ + Enter, stany błędu,
   wysyłania i sukcesu.
-- **Stopka** - litery KILWATER wynurzają się z wody, gdy przepływa pod nimi jacht.
+- **Stopka** - zaproszenie z przyciskiem „Zaplanuj swój rejs”, informacją, że zapytanie nic nie kosztuje, i skrótami
+  akwenów, które od razu ustawiają akwen w formularzu. Litery KILWATER wynurzają się z wody, gdy przepływa pod nimi jacht.
 
 Wszystkie animacje wyłączają się przy `prefers-reduced-motion`. Strona wtedy pokazuje stan końcowy od razu.
 
@@ -111,7 +113,7 @@ Wszystkie animacje wyłączają się przy `prefers-reduced-motion`. Strona wtedy
 
 | Jak to działa | Stopka |
 |---|---|
-| ![Cztery kroki procesu na osi czasu](docs/screenshots/proces.png) | ![Stopka z kontaktem, dokumentami i napisem KILWATER nad linią fali](docs/screenshots/stopka.png) |
+| ![Cztery kroki procesu na osi czasu](docs/screenshots/proces.png) | ![Stopka z zaproszeniem do zaplanowania rejsu, skrótami akwenów, kontaktem i napisem KILWATER nad linią fali](docs/screenshots/stopka.png) |
 
 | Formularz zapytania | Formularz z błędami |
 |---|---|
@@ -153,9 +155,10 @@ HOST=0.0.0.0 PORT=8080 node ./dist/server/entry.mjs
 | `npm run build` | Build: statyczne strony w `dist/client`, serwer w `dist/server` |
 | `npm run preview` | Podgląd buildu |
 | `npm run assistant:model` | Pobiera model asystenta `Xenova/bge-m3` do `models/` (raz, także przy wdrożeniu) |
-| `npm run test:e2e` | 38 testów Playwright na buildzie produkcyjnym (port 4521) |
+| `npm run test:e2e` | 40 testów Playwright na buildzie produkcyjnym (port 4521) |
 | `npm run assistant:eval` | 48 pytań kontrolnych: parafrazy z bazy, pytania bliskie tematu bez odpowiedzi, pytania spoza tematu i filtr danych kontaktowych |
 | `npm run brand:assets` | Generuje favicon (`.ico`, `.svg`, ikonę Apple) i obraz OG 1200x630 ze znaku logo |
+| `npm run routes:map` | Pobiera z OpenStreetMap linie brzegowe, jeziora i kanały dla tras, wyznacza drogę wodą i zapisuje `src/data/route-maps.json` |
 | `npm run images:strip` | Usuwa metadane (EXIF, XMP, C2PA) ze zdjęć w `src/assets/photos`, `public` i `docs/screenshots` |
 
 Astro 7 pozwala na jeden serwer deweloperski na projekt, dlatego testy budują wersję produkcyjną i uruchamiają
@@ -221,6 +224,7 @@ src/
   layouts/          Base (meta, nawigacja, stopka), LegalLayout (dokumenty ze spisem treści)
   data/             company.ts, inquiry-options.ts, logo-mark.ts - jedno źródło danych i znaku logo,
                     offer.ts, routes.ts, seasons.ts, faq.ts - treść oferty, tras, kalendarza sezonu i FAQ,
+                    route-maps.json - mapy tras z OpenStreetMap (generowane przez npm run routes:map),
                     assistant-answers.ts - baza odpowiedzi asystenta
   lib/              inquiry-schema.ts - walidacja zod, assistant.ts - model lokalny i dopasowanie pytań,
                     env.ts, rate-limit.ts
@@ -228,7 +232,8 @@ src/
   styles/           tokens.css (kolory, typografia, odstępy), global.css
   assets/photos/    zdjęcia źródłowe, optymalizowane przy buildzie
 public/             favicon, apple-touch-icon, og-image.jpg, robots.txt
-scripts/            brand-assets.mjs, strip-image-metadata.mjs
+scripts/            brand-assets.mjs, strip-image-metadata.mjs, download-assistant-model.mjs,
+                    build-route-maps.mjs
 tests/e2e/          formularz, API, strony i SEO, nawigacja, trasy, sezon, FAQ i asystent
 tests/eval/         pytania kontrolne jakości odpowiedzi asystenta
 models/             model asystenta pobierany przez npm run assistant:model (poza repozytorium)
@@ -271,6 +276,13 @@ które przedstawiają prawdziwe miejsca. Przed publikacją sprawdź to z prawnik
 zdjęciami jachtów.
 
 Fonty Jost i DM Sans są na licencji SIL Open Font License, więc można ich używać komercyjnie.
+
+Mapy tras powstają z danych © współtwórców OpenStreetMap na licencji ODbL. Podpis z odnośnikiem do
+openstreetmap.org/copyright jest pod każdą mapą i musi zostać. Plik `src/data/route-maps.json` jest bazą
+pochodną, więc obowiązuje go ODbL, a nie licencja MIT kodu. Mapy są wpisane w stronę, więc przeglądarka
+nie łączy się z żadnym serwerem map. Żeby odświeżyć dane albo dodać trasę, uruchom `npm run routes:map`
+(publiczne serwery Overpass bywają przeciążone, skrypt sam ponawia zapytania, a `OSM_CACHE_DIR=<folder>`
+zapisuje odpowiedzi do ponownego użycia).
 
 Dokumenty `/polityka-prywatnosci` i `/regulamin` to wzory. Przed publikacją uzupełnij pola `[[...]]` (KRS,
 sąd rejestrowy, kapitał zakładowy, hosting, biuro rachunkowe, okresy przechowywania, data wejścia w życie)

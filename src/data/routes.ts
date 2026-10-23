@@ -46,12 +46,12 @@ export const sampleRoutes: SampleRoute[] = [
     nights: 7,
     stops: [
       { name: "Lavrio", lat: 37.713, lon: 24.057, labelSide: "left" },
-      { name: "Kea", lat: 37.669, lon: 24.322 },
-      { name: "Kythnos", lat: 37.432, lon: 24.38, labelSide: "left" },
+      { name: "Kea", lat: 37.661, lon: 24.316 },
+      { name: "Kythnos", lat: 37.391, lon: 24.396, labelSide: "left" },
       { name: "Serifos", lat: 37.143, lon: 24.515, labelSide: "left" },
       { name: "Sifnos", lat: 36.99, lon: 24.674 },
       { name: "Syros", lat: 37.444, lon: 24.943 },
-      { name: "Kea", lat: 37.655, lon: 24.31 },
+      { name: "Kea", lat: 37.661, lon: 24.316 },
       { name: "Lavrio", lat: 37.713, lon: 24.057, labelSide: "left" },
     ],
     legs: [

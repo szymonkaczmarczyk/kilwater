@@ -11,7 +11,8 @@
     "brand:assets": "node scripts/brand-assets.mjs",
     "images:strip": "node scripts/strip-image-metadata.mjs",
     "assistant:model": "node scripts/download-assistant-model.mjs",
-    "assistant:eval": "playwright test --config playwright.eval.config.ts"
+    "assistant:eval": "playwright test --config playwright.eval.config.ts",
+    "routes:map": "node scripts/build-route-maps.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.9",

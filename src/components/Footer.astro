@@ -2,6 +2,7 @@
 import Logo from "./Logo.astro";
 import { company } from "../data/company";
 import { logoMark } from "../data/logo-mark";
+import { destinationTexts } from "../data/offer";
 
 const sections = [
   { href: "/#akweny", label: "Akweny" },
@@ -27,11 +28,30 @@ const year = new Date().getFullYear();
   <div class="footer__inner">
     <div class="footer__brand">
       <Logo />
-      <p class="footer__tagline">Czarter jachtów z załogą w Chorwacji, Grecji, Włoszech i na Mazurach.</p>
-      <a class="button button--solid" href="/#zapytanie">
-        Zaplanuj rejs
-        <span class="button__arrow" aria-hidden="true">→</span>
-      </a>
+      <h2 class="footer__pitch">Twój tydzień na wodzie zaczyna się od <span class="footer__accent">jednej wiadomości</span>.</h2>
+      <p class="footer__tagline">
+        Napisz, gdzie i kiedy chcesz płynąć. Broker odpowie z propozycją jachtów, trasy i ceny, a zapytanie nic nie kosztuje.
+      </p>
+      <div class="footer__actions">
+        <a class="button button--solid footer__cta" href="/#zapytanie">
+          Zaplanuj swój rejs
+          <span class="button__arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="footer__link footer__mail" href={`mailto:${company.email}`}>albo napisz na {company.email}</a>
+      </div>
+      <div class="footer__start">
+        <p class="footer__start-label" id="footer-start-label">Zacznij od akwenu:</p>
+        <ul class="footer__destinations" aria-labelledby="footer-start-label">
+          {destinationTexts.map((destination) => (
+            <li>
+              <a class="footer__destination" href={`/?akwen=${destination.slug}#zapytanie`}>
+                {destination.name}
+                <span class="footer__destination-arrow" aria-hidden="true">↗</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
 
     <nav class="footer__column" aria-label="Sekcje strony">
@@ -183,9 +203,86 @@ const year = new Date().getFullYear();
     gap: var(--space-5);
   }
 
+  .footer__pitch {
+    max-width: 18ch;
+    margin-top: var(--space-3);
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.02em;
+  }
+
+  .footer__accent {
+    text-decoration: underline wavy var(--accent);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 8px;
+    text-decoration-skip-ink: none;
+  }
+
   .footer__tagline {
-    max-width: 32ch;
+    max-width: 44ch;
     color: var(--text-muted);
+  }
+
+  .footer__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+  }
+
+  .footer__cta {
+    min-height: 56px;
+    padding-inline: var(--space-6);
+    font-size: var(--size-body);
+  }
+
+  .footer__mail {
+    font-size: var(--size-small);
+    color: var(--text-muted);
+  }
+
+  .footer__start {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .footer__start-label {
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .footer__destinations {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .footer__destination {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--hit-target);
+    padding: 0 var(--space-4);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-sm);
+    font-size: var(--size-small);
+    color: var(--text-strong);
+    transition:
+      border-color var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .footer__destination-arrow {
+    color: var(--accent);
+    transition: transform var(--duration-fast) var(--ease-out);
   }
 
   .footer__heading {
@@ -315,6 +412,15 @@ const year = new Date().getFullYear();
   @media (hover: hover) {
     .footer__link:hover {
       background-size: 100% 1px;
+    }
+
+    .footer__destination:hover {
+      border-color: var(--accent);
+      background: var(--color-sand-100);
+    }
+
+    .footer__destination:hover .footer__destination-arrow {
+      transform: translate(2px, -2px);
     }
 
     .footer__top:hover .footer__top-arrow {
