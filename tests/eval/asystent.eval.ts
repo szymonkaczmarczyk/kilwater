@@ -29,6 +29,9 @@ const shouldAnswer: [question: string, expectedEntryIds: string | string[]][] = 
   ["co dzieje się po wysłaniu formularza", "rezerwacja"],
   ["macie katamarany?", "jachty"],
   ["czy jacht ma klimatyzację", "wyposazenie"],
+  ["od czego zacząć pierwszy czarter", "poradnik-pierwszy-czarter-krok-po-kroku"],
+  ["czego lepiej nie brać na jacht", "poradnik-pakowanie"],
+  ["który akwen wybrać dla początkujących", ["poradnik-jak-wybrac-akwen", "akweny"]],
   ["spóźnimy się na odbiór jachtu, co wtedy", "w-trakcie-rejsu"],
   ["czy można zmienić skippera w trakcie rejsu", ["w-trakcie-rejsu", "rejs-2"]],
   ["czy mogę palić papierosy na jachcie", "zasady-na-pokladzie"],
@@ -43,7 +46,8 @@ const nearTopicWithoutAnswer = [
   "czy przyjmujecie płatność w ratach",
 ];
 
-const firstQuestionOf = (entryId: string) => assistantEntries.find((entry) => entry.id === entryId)!.questions[0];
+const firstQuestionOf = (entryId: string, locale: "pl" | "en" = "pl") =>
+  assistantEntries[locale].find((entry) => entry.id === entryId)!.questions[0];
 
 const shouldNotAnswer = [
   "jak zrobić bigos",
@@ -67,10 +71,10 @@ const screened = [
 test.describe("asystent lokalny", () => {
   for (const [question, expectedEntryIds] of shouldAnswer) {
     test(`odpowiada: ${question}`, async () => {
-      const [top, second] = await rankEntries(normalizeQuestion(question));
-      const reply = await answerQuestion(normalizeQuestion(question));
+      const [top, second] = await rankEntries(normalizeQuestion(question), "pl");
+      const reply = await answerQuestion(normalizeQuestion(question), "pl");
       console.log(`  ${reply.kind} ${top.score.toFixed(3)} ${top.entry.id} (druga: ${second.score.toFixed(3)} ${second.entry.id})`);
-      const expectedQuestions = [expectedEntryIds].flat().map(firstQuestionOf);
+      const expectedQuestions = [expectedEntryIds].flat().map((id) => firstQuestionOf(id));
       const shownQuestion = reply.kind === "answer" ? reply.matchedQuestion : reply.related[0];
       expect(["answer", "unsure"]).toContain(reply.kind);
       expect(expectedQuestions).toContain(shownQuestion);
@@ -79,23 +83,62 @@ test.describe("asystent lokalny", () => {
 
   for (const question of nearTopicWithoutAnswer) {
     test(`bez zgadywania: ${question}`, async () => {
-      const [top, second] = await rankEntries(normalizeQuestion(question));
+      const [top, second] = await rankEntries(normalizeQuestion(question), "pl");
       console.log(`  ${top.score.toFixed(3)} ${top.entry.id} (druga: ${second.score.toFixed(3)} ${second.entry.id})`);
-      expect((await answerQuestion(normalizeQuestion(question))).kind).not.toBe("answer");
+      expect((await answerQuestion(normalizeQuestion(question), "pl")).kind).not.toBe("answer");
     });
   }
 
   for (const question of shouldNotAnswer) {
     test(`nie odpowiada: ${question}`, async () => {
-      const [top] = await rankEntries(normalizeQuestion(question));
+      const [top] = await rankEntries(normalizeQuestion(question), "pl");
       console.log(`  ${top.score.toFixed(3)} ${top.entry.id}`);
-      expect((await answerQuestion(normalizeQuestion(question))).kind).not.toBe("answer");
+      expect((await answerQuestion(normalizeQuestion(question), "pl")).kind).not.toBe("answer");
     });
   }
 
   for (const question of screened) {
     test(`filtr wstępny: ${question}`, () => {
-      expect(screenQuestion(normalizeQuestion(question))?.kind).toBe("blocked");
+      expect(screenQuestion(normalizeQuestion(question), "pl")?.kind).toBe("blocked");
+    });
+  }
+});
+
+const shouldAnswerEnglish: [question: string, expectedEntryIds: string | string[]][] = [
+  ["do I need some kind of licence to go sailing", "faq-1"],
+  ["can my labrador come on the boat", "faq-6"],
+  ["I get sick on boats easily", "faq-4"],
+  ["what clothes to take for a week on the water", "faq-9"],
+  ["how much is a week on a catamaran", "cena"],
+  ["is fuel included in the price", "faq-3"],
+  ["when does the meltemi blow in the Cyclades", "sezon-grecja"],
+  ["will someone cook for us on board", "zaloga"],
+  ["no licence but we want a captain", ["rejs-2", "faq-1"]],
+  ["can we rent a paddle board", "dodatki"],
+  ["is there wifi on the yacht", "wyposazenie"],
+  ["how do I get in touch with you", "kontakt"],
+];
+
+const shouldNotAnswerEnglish = ["how to bake a cheesecake", "write a python script that sorts a list", "who will win the election", "what is the capital of Australia"];
+
+test.describe("asystent lokalny po angielsku", () => {
+  for (const [question, expectedEntryIds] of shouldAnswerEnglish) {
+    test(`answers: ${question}`, async () => {
+      const [top, second] = await rankEntries(normalizeQuestion(question), "en");
+      const reply = await answerQuestion(normalizeQuestion(question), "en");
+      console.log(`  ${reply.kind} ${top.score.toFixed(3)} ${top.entry.id} (second: ${second.score.toFixed(3)} ${second.entry.id})`);
+      const expectedQuestions = [expectedEntryIds].flat().map((id) => firstQuestionOf(id, "en"));
+      const shownQuestion = reply.kind === "answer" ? reply.matchedQuestion : reply.related[0];
+      expect(["answer", "unsure"]).toContain(reply.kind);
+      expect(expectedQuestions).toContain(shownQuestion);
+    });
+  }
+
+  for (const question of shouldNotAnswerEnglish) {
+    test(`does not answer: ${question}`, async () => {
+      const [top] = await rankEntries(normalizeQuestion(question), "en");
+      console.log(`  ${top.score.toFixed(3)} ${top.entry.id}`);
+      expect((await answerQuestion(normalizeQuestion(question), "en")).kind).not.toBe("answer");
     });
   }
 });

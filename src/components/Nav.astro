@@ -1,28 +1,31 @@
 ---
 import Logo from "./Logo.astro";
+import { hasPage, pagePath, sectionHref, toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
 
 interface Props {
   solid?: boolean;
+  switchPath: string;
 }
 
-const { solid = false } = Astro.props;
+const { solid = false, switchPath } = Astro.props;
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
 
 const links = [
-  { href: "/#akweny", label: "Akweny" },
-  { href: "/#rejsy", label: "Rodzaje rejsów" },
-  { href: "/#trasy", label: "Trasy" },
-  { href: "/#kiedy-plynac", label: "Kiedy płynąć" },
-  { href: "/#faq", label: "FAQ" },
+  ...t.nav.links.map((link) => ({ href: sectionHref(locale, link.id), label: link.label })),
+  ...(hasPage("guide", locale) ? [{ href: pagePath("guide", locale), label: t.nav.guide }] : []),
 ];
+const planHref = sectionHref(locale, "zapytanie");
 ---
 
 <header class:list={["nav", { "is-scrolled": solid }]} data-nav>
   <div class="nav__inner">
-    <a href="/" class="nav__brand" aria-label="Kilwater, strona główna">
+    <a href={pagePath("home", locale)} class="nav__brand" aria-label={t.nav.homeAria}>
       <Logo />
     </a>
 
-    <nav class="nav__links" aria-label="Główna nawigacja">
+    <nav class="nav__links" aria-label={t.nav.mainAria}>
       <ul>
         {links.map((link) => (
           <li><a href={link.href} class="nav__link">{link.label}</a></li>
@@ -30,14 +33,17 @@ const links = [
       </ul>
     </nav>
 
-    <a href="/#zapytanie" class="button nav__cta">
-      Zaplanuj rejs
-      <span class="button__arrow" aria-hidden="true">→</span>
-    </a>
+    <div class="nav__actions">
+      <a href={switchPath} class="nav__lang" hreflang={locale === "pl" ? "en" : "pl"} aria-label={t.nav.switchAria}>{t.nav.switchLabel}</a>
+      <a href={planHref} class="button nav__cta">
+        {t.nav.cta}
+        <span class="button__arrow" aria-hidden="true">→</span>
+      </a>
 
-    <button class="nav__menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-open>
-      Menu
-    </button>
+      <button class="nav__menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-open>
+        {t.nav.menu}
+      </button>
+    </div>
   </div>
 
   <div class="sheet" id="mobile-menu" hidden data-menu>
@@ -46,7 +52,7 @@ const links = [
         <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
           <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
         </svg>
-        Zamknij
+        {t.nav.close}
       </button>
       <Logo withWordmark={false} />
     </div>
@@ -60,8 +66,8 @@ const links = [
         </li>
       ))}
     </ul>
-    <a href="/#zapytanie" class="button button--solid sheet__cta" data-menu-link>
-      Zaplanuj rejs
+    <a href={planHref} class="button button--solid sheet__cta" data-menu-link>
+      {t.nav.cta}
       <span class="button__arrow" aria-hidden="true">→</span>
     </a>
   </div>
@@ -159,6 +165,7 @@ const links = [
   .nav__link {
     position: relative;
     display: inline-flex;
+    white-space: nowrap;
     align-items: center;
     min-height: var(--hit-target);
     font-size: var(--size-label);
@@ -178,6 +185,28 @@ const links = [
     transform: scaleX(0);
     transform-origin: left;
     transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  .nav__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    white-space: nowrap;
+  }
+
+  .nav__lang {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--hit-target);
+    min-height: var(--hit-target);
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 6px;
+    transition: text-decoration-color var(--duration-fast) var(--ease-out);
   }
 
   .nav__menu-toggle {
@@ -262,9 +291,13 @@ const links = [
     .nav__link:hover::after {
       transform: scaleX(1);
     }
+
+    .nav__lang:hover {
+      text-decoration-color: currentColor;
+    }
   }
 
-  @media (min-width: 1024px) {
+  @media (min-width: 1200px) {
     .nav__links,
     .nav__cta {
       display: flex;

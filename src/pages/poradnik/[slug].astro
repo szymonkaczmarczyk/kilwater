@@ -1,0 +1,446 @@
+---
+import { Picture, getImage } from "astro:assets";
+import { render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import { company } from "../../data/company";
+import { formatGuideDate, guideArticles, guidePath, readingMinutes, type GuideArticle } from "../../lib/guide";
+
+export const getStaticPaths = async () => {
+  const articles = await guideArticles();
+  return articles.map((article, index) => ({
+    params: { slug: article.id },
+    props: { article, related: [articles[(index + 1) % articles.length], articles[(index + 2) % articles.length]] },
+  }));
+};
+
+interface Props {
+  article: GuideArticle;
+  related: GuideArticle[];
+}
+
+const { article, related } = Astro.props;
+const { Content, headings } = await render(article);
+const sections = headings.filter((heading) => heading.depth === 2);
+const minutes = readingMinutes(article.body ?? "");
+const articleUrl = new URL(guidePath(article), Astro.site).href;
+const coverImage = await getImage({ src: article.data.cover, format: "jpg", width: 1200 });
+
+const structuredData = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.data.title,
+    description: article.data.description,
+    datePublished: article.data.published.toISOString().slice(0, 10),
+    dateModified: (article.data.updated ?? article.data.published).toISOString().slice(0, 10),
+    image: new URL(coverImage.src, Astro.site).href,
+    inLanguage: "pl",
+    mainEntityOfPage: articleUrl,
+    author: { "@type": "Organization", name: company.name, url: Astro.site?.href },
+    publisher: { "@type": "Organization", name: company.name, url: Astro.site?.href },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Kilwater", item: Astro.site?.href },
+      { "@type": "ListItem", position: 2, name: "Poradnik", item: new URL("/poradnik", Astro.site).href },
+      { "@type": "ListItem", position: 3, name: article.data.title, item: articleUrl },
+    ],
+  },
+]);
+---
+
+<Base title={`${article.data.title} - Poradnik Kilwater`} description={article.data.description} solidNav>
+  <article class="post">
+    <header class="post__head">
+      <nav class="post__breadcrumbs" aria-label="Okruszki">
+        <a class="post__back" href="/poradnik">
+          <span aria-hidden="true">←</span>
+          Wszystkie porady
+        </a>
+      </nav>
+      <p class="post__topic">{article.data.topic}</p>
+      <h1 class="post__title">{article.data.title}</h1>
+      <p class="post__lead">{article.data.description}</p>
+      <p class="post__meta">
+        <time datetime={article.data.published.toISOString().slice(0, 10)}>{formatGuideDate(article.data.published)}</time>
+        <span aria-hidden="true">·</span>
+        {minutes} min czytania
+      </p>
+    </header>
+
+    <figure class="frame post__cover">
+      <Picture
+        src={article.data.cover}
+        alt={article.data.coverAlt}
+        formats={["avif", "webp"]}
+        fallbackFormat="jpg"
+        widths={[640, 960, 1280, 1600]}
+        sizes="(min-width: 1440px) 1344px, 100vw"
+        loading="eager"
+        fetchpriority="high"
+      />
+    </figure>
+
+    <div class="post__layout">
+      <nav class="post__toc" aria-label="Spis treści">
+        <p class="post__toc-title">W tym tekście</p>
+        <ol>
+          {sections.map((section) => (
+            <li><a href={`#${section.slug}`}>{section.text}</a></li>
+          ))}
+        </ol>
+      </nav>
+
+      <div class="post__body">
+        <Content />
+      </div>
+    </div>
+
+    <aside class="post__cta" aria-labelledby="post-cta-title">
+      <div>
+        <p class="label">Następny krok</p>
+        <p class="post__cta-title" id="post-cta-title">Opisz swój rejs, a broker przygotuje propozycję jachtów i trasy.</p>
+        <p class="post__cta-text">Zapytanie nic nie kosztuje i do niczego nie zobowiązuje.</p>
+      </div>
+      <div class="post__cta-actions">
+        <a class="button post__cta-button" href="/#zapytanie">
+          Zaplanuj rejs
+          <span class="button__arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="link-underline post__cta-link" href="/#faq">Zapytaj asystenta</a>
+      </div>
+    </aside>
+
+    <section class="post__related" aria-labelledby="post-related-title">
+      <h2 class="post__related-title" id="post-related-title">Czytaj dalej</h2>
+      <div class="post__related-list">
+        {related.map((item) => (
+          <a class="related" href={guidePath(item)}>
+            <figure class="frame related__frame">
+              <Picture
+                src={item.data.cover}
+                alt=""
+                formats={["avif", "webp"]}
+                fallbackFormat="jpg"
+                widths={[400, 720]}
+                sizes="(min-width: 768px) 25vw, 40vw"
+                loading="lazy"
+              />
+            </figure>
+            <div>
+              <p class="related__topic">{item.data.topic}</p>
+              <p class="related__title">{item.data.title}</p>
+              <p class="related__meta">{readingMinutes(item.body ?? "")} min czytania</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  </article>
+  <script type="application/ld+json" set:html={structuredData} />
+</Base>
+
+<style>
+  .post {
+    display: grid;
+    gap: var(--space-8);
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: calc(var(--nav-height) + var(--space-7)) var(--gutter) var(--space-10);
+  }
+
+  .post__head {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-4);
+    max-width: 52rem;
+  }
+
+  .post__back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--hit-target);
+    margin-bottom: var(--space-3);
+    font-size: var(--size-small);
+    font-weight: var(--weight-medium);
+  }
+
+  .post__topic {
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .post__title {
+    font-family: var(--font-display);
+    font-size: var(--size-h2);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.06em;
+  }
+
+  .post__lead {
+    max-width: var(--measure);
+    font-size: var(--size-body-large);
+    color: var(--text-muted);
+  }
+
+  .post__meta {
+    display: flex;
+    gap: var(--space-2);
+    font-size: var(--size-small);
+    color: var(--text-muted);
+  }
+
+  .post__cover {
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+  }
+
+  .post__cover :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .post__layout {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  .post__toc {
+    padding: var(--space-5);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+  }
+
+  .post__toc-title {
+    margin-bottom: var(--space-3);
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .post__toc ol {
+    display: grid;
+    margin: 0;
+    padding-left: var(--space-5);
+    font-size: var(--size-small);
+  }
+
+  .post__toc a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+  }
+
+  .post__body {
+    max-width: var(--measure);
+    font-size: var(--size-body-large);
+    line-height: var(--leading-body);
+  }
+
+  .post__body :global(h2) {
+    margin: var(--space-8) 0 var(--space-4);
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.02em;
+    scroll-margin-top: calc(var(--nav-height) + var(--space-5));
+  }
+
+  .post__body :global(p),
+  .post__body :global(li) {
+    color: var(--text-muted);
+  }
+
+  .post__body :global(p + p),
+  .post__body :global(p + ul),
+  .post__body :global(p + ol),
+  .post__body :global(ul + p),
+  .post__body :global(ol + p) {
+    margin-top: var(--space-4);
+  }
+
+  .post__body :global(ul),
+  .post__body :global(ol) {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding-left: var(--space-5);
+  }
+
+  .post__body :global(li::marker) {
+    color: var(--accent);
+  }
+
+  .post__body :global(strong) {
+    color: var(--text-strong);
+    font-weight: var(--weight-semibold);
+  }
+
+  .post__body :global(a) {
+    color: var(--text-strong);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+
+  .post__cta {
+    display: grid;
+    gap: var(--space-5);
+    padding: var(--space-7) var(--space-6);
+    border-radius: var(--radius-md);
+    background: var(--surface-deep);
+    color: var(--text-on-deep);
+  }
+
+  .post__cta .label {
+    color: var(--text-on-deep-muted);
+  }
+
+  .post__cta-title {
+    max-width: 30ch;
+    margin-top: var(--space-3);
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.02em;
+  }
+
+  .post__cta-text {
+    margin-top: var(--space-3);
+    color: var(--text-on-deep-muted);
+  }
+
+  .post__cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4) var(--space-6);
+  }
+
+  .post__cta-button {
+    background: var(--text-on-deep);
+    border-color: var(--text-on-deep);
+    color: var(--text-strong);
+  }
+
+  .post__cta-link {
+    color: var(--text-on-deep);
+  }
+
+  .post__related {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .post__related-title {
+    font-family: var(--font-display);
+    font-size: var(--size-h4);
+    font-weight: var(--weight-regular);
+    letter-spacing: var(--tracking-display-caps);
+    text-transform: uppercase;
+  }
+
+  .post__related-list {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .related {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-md);
+    color: inherit;
+    transition: border-color var(--duration-fast) var(--ease-out);
+  }
+
+  .related__frame {
+    overflow: hidden;
+    aspect-ratio: 1;
+  }
+
+  .related__frame :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .related__topic {
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .related__title {
+    margin-top: var(--space-1);
+    font-family: var(--font-display);
+    font-size: var(--size-h4);
+    line-height: var(--leading-heading);
+  }
+
+  .related__meta {
+    margin-top: var(--space-2);
+    font-size: var(--size-small);
+    color: var(--text-muted);
+  }
+
+  @media (hover: hover) {
+    .post__toc a:hover,
+    .post__back:hover {
+      color: var(--accent);
+    }
+
+    .related:hover {
+      border-color: var(--accent);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .post__cta {
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      padding: var(--space-8);
+    }
+
+    .post__related-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .post__layout {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+      align-items: start;
+    }
+
+    .post__toc {
+      grid-column: 1 / span 3;
+      position: sticky;
+      top: calc(var(--nav-height) + var(--space-6));
+    }
+
+    .post__body {
+      grid-column: 5 / span 7;
+    }
+  }
+</style>

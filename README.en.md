@@ -62,8 +62,11 @@ production without configuration the endpoint returns `503`, so enquiries don't 
 | Path | What it is |
 |---|---|
 | `/` | Landing: hero, what Kilwater is, sailing areas, cruise types, crew and extras, sample routes, season calendar, how it works, FAQ, form |
-| `/polityka-prywatnosci` | GDPR-compliant privacy policy with a table of contents |
-| `/regulamin` | Website terms under the Polish electronic services act |
+| `/en/` | English version of the landing page with the same sections, form and assistant |
+| `/poradnik` | Guide: a list of articles before the first cruise (in Polish) |
+| `/poradnik/<article>` | Article with contents, a call to action and related texts |
+| `/polityka-prywatnosci` | GDPR-compliant privacy policy with a table of contents (`/en/privacy-policy` in English) |
+| `/regulamin` | Website terms under the Polish electronic services act (`/en/terms` in English) |
 | any other path | 404 page "This course leads straight into the fog" |
 | `POST /api/zapytanie` | Receiving a cruise enquiry |
 | `POST /api/asystent` | The assistant's answer to a cruise question (`GET` loads the model ahead of time) |
@@ -95,6 +98,26 @@ production without configuration the endpoint returns `503`, so enquiries don't 
   the sailing areas that set the area in the form right away. The KILWATER letters rise from the water as the yacht
   sails under them.
 
+**English version**
+
+- `/en/…` paths, a PL/EN switch in the menu that leads to the counterpart of the current page, and `hreflang` plus the
+  sitemap pointing to both versions.
+- Interface texts live in `src/i18n/ui.ts` (the Polish dictionary is the template and TypeScript requires English to
+  have the same keys), content in `src/data/*` as `{ pl, en }` pairs.
+- The form and the assistant send a `lang` field, so error messages and assistant answers are in the page language.
+  The email to the broker stays in Polish with a note about the client's language.
+- The English legal documents are an informational translation. The Polish version is binding.
+
+**Guide**
+
+- Five Markdown articles (`src/content/poradnik/`): first charter step by step, choosing an area, yacht types, what
+  to pack and sailing without a licence. Content based on the site data and general sailing knowledge, with no
+  prices or promises.
+- A 1-2-2 list with cards of different sizes, an article page with contents, reading time, `Article` and
+  `BreadcrumbList` structured data, a call to action and two related texts.
+- The assistant knows every article and links to it for matching questions. An e2e test makes sure a new article
+  is never left without an answer in the assistant base.
+
 All animations turn off with `prefers-reduced-motion`. The page then shows the final state right away.
 
 ## Screenshots
@@ -103,7 +126,7 @@ All animations turn off with `prefers-reduced-motion`. The page then shows the f
 
 | Sailing areas | Greece and Italy |
 |---|---|
-| ![Sailing areas section with a heading and an arched frame of a harbor in Croatia](docs/screenshots/akweny.jpg) | ![Arched frames of Greece and Italy with the wave line between them](docs/screenshots/akweny-grecja-wlochy.jpg) |
+| ![Sailing areas section with a heading and an arched frame of a harbour in Croatia](docs/screenshots/akweny.jpg) | ![Arched frames of Greece and Italy with the wave line between them](docs/screenshots/akweny-grecja-wlochy.jpg) |
 
 | Cruise types | Extras on board |
 |---|---|
@@ -113,9 +136,13 @@ All animations turn off with `prefers-reduced-motion`. The page then shows the f
 |---|---|
 | ![Route tabs and a map of the loop from Split around the Dalmatian islands next to the day-by-day plan](docs/screenshots/trasy.png) | ![Season calendar with September in Greece selected and a description of wind and water](docs/screenshots/kalendarz-sezonu.png) |
 
-| FAQ and assistant | Route on a phone |
+| FAQ and assistant | English version |
 |---|---|
-| ![Questions before the cruise with the assistant box and collapsible answers](docs/screenshots/faq.png) | ![Map of the Dalmatia route and the day plan on a phone](docs/screenshots/mobile-trasy.png) |
+| ![Questions before the cruise with the assistant box and collapsible answers](docs/screenshots/faq.png) | ![English home page with a yacht in an arched window and a PL switch in the menu](docs/screenshots/wersja-angielska.png) |
+
+| Guide | Article |
+|---|---|
+| ![Guide article list with a large card for the first charter](docs/screenshots/poradnik.png) | ![Article about choosing an area with the contents on the left](docs/screenshots/artykul.png) |
 
 | How it works | Footer |
 |---|---|
@@ -134,6 +161,10 @@ All animations turn off with `prefers-reduced-motion`. The page then shows the f
 | Hero | Menu |
 |---|---|
 | ![Hero on a phone with a yacht in an arched window](docs/screenshots/mobile-hero.jpg) | ![Full-screen menu with a Close button on the left](docs/screenshots/mobile-menu.png) |
+
+| Route | Guide article |
+|---|---|
+| ![Map of the Dalmatia route and the day plan on a phone](docs/screenshots/mobile-trasy.png) | ![Article about sailing without a licence on a phone](docs/screenshots/mobile-artykul.png) |
 
 The screenshots show the final state of the animations. The form data is
 sample data.
@@ -161,8 +192,9 @@ HOST=0.0.0.0 PORT=8080 node ./dist/server/entry.mjs
 | `npm run build` | Build: static pages in `dist/client`, the server in `dist/server` |
 | `npm run preview` | Build preview |
 | `npm run assistant:model` | Downloads the assistant model `Xenova/bge-m3` into `models/` (once, also on deployment) |
-| `npm run test:e2e` | 40 Playwright tests on the production build (port 4521) |
-| `npm run assistant:eval` | 48 check questions: paraphrases of the base, near-topic questions without an answer, off-topic questions and the contact data filter |
+| `npm run check` | TypeScript check of `.astro` and `.ts` files (`astro check`) |
+| `npm run test:e2e` | 51 Playwright tests on the production build (port 4521) |
+| `npm run assistant:eval` | 67 check questions in Polish and English: paraphrases of the base, near-topic questions without an answer, off-topic questions and the contact data filter |
 | `npm run brand:assets` | Generates the favicon (`.ico`, `.svg`, Apple icon) and a 1200x630 OG image from the logo mark |
 | `npm run routes:map` | Downloads coastlines, lakes and canals for the routes from OpenStreetMap, finds the water route and writes `src/data/route-maps.json` |
 | `npm run images:strip` | Removes metadata (EXIF, XMP, C2PA) from images in `src/assets/photos`, `public` and `docs/screenshots` |
@@ -221,25 +253,28 @@ topics. To teach it a new question, add a phrasing to `alsoAsked` or a new entry
 
 ```
 src/
-  pages/            index, 404, polityka-prywatnosci.md, regulamin.md, sitemap.xml.ts
+  pages/            index, 404, polityka-prywatnosci.md, regulamin.md, sitemap.xml.ts,
+                    en/ (index, privacy-policy.md, terms.md), poradnik/ (index, [slug])
   pages/api/        zapytanie.ts - the form endpoint, asystent.ts - the assistant endpoint
   components/       landing sections (Hero, Destinations, CruiseTypes, CrewExtras, SampleRoutes,
                     SeasonCalendar, Process, Faq, Inquiry),
-                    Voyage (wave line), Nav, Footer, Logo, LineIcon
+                    HomePage (shared PL and EN home page), Voyage (wave line), Nav, Footer, Logo, LineIcon
+  content/poradnik/ guide articles in Markdown (schema in src/content.config.ts)
+  i18n/             locales.ts (languages and paths), ui.ts (interface texts), inquiry-messages.ts (form messages)
   layouts/          Base (meta, navigation, footer), LegalLayout (documents with a table of contents)
   data/             company.ts, inquiry-options.ts, logo-mark.ts - a single source of data and the logo mark,
                     offer.ts, routes.ts, seasons.ts, faq.ts - offer, routes, season calendar and FAQ content,
                     route-maps.json - route maps from OpenStreetMap (generated by npm run routes:map),
                     assistant-answers.ts - the assistant's answer base
   lib/              inquiry-schema.ts - zod validation, assistant.ts - local model and question matching,
-                    env.ts, rate-limit.ts
+                    guide.ts - guide articles, env.ts, rate-limit.ts
   scripts/          motion.ts (GSAP, Lenis, anchors), reveal.ts (reveals and parallax)
   styles/           tokens.css (colors, typography, spacing), global.css
   assets/photos/    source photos, optimized at build time
 public/             favicon, apple-touch-icon, og-image.jpg, robots.txt
 scripts/            brand-assets.mjs, strip-image-metadata.mjs, download-assistant-model.mjs,
                     build-route-maps.mjs
-tests/e2e/          form, API, pages and SEO, navigation, routes, season, FAQ and assistant
+tests/e2e/          form, API, pages and SEO, navigation, routes, season, FAQ, assistant, English version, guide
 tests/eval/         assistant answer quality checks
 models/             assistant model downloaded by npm run assistant:model (outside the repository)
 docs/

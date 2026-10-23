@@ -1,21 +1,25 @@
 ---
 import { Picture } from "astro:assets";
 import ropeImage from "../assets/photos/lina.png";
+import { toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
+
+const t = useTranslations(toLocale(Astro.currentLocale)).promise;
 ---
 
 <section class="promise" aria-labelledby="promise-title">
   <span class="wake-point" data-wake-point="start" aria-hidden="true"></span>
   <div class="promise__inner">
-    <p class="label promise__label">Czym jest Kilwater</p>
+    <p class="label promise__label">{t.label}</p>
 
     <h2 id="promise-title" class="promise__title">
-      Ty wybierasz zatokę.<br />My dbamy o wszystko, co dzieje się po drodze.
+      {t.titleLines[0]}<br />{t.titleLines[1]}
     </h2>
 
     <figure class="promise__figure">
       <Picture
         src={ropeImage}
-        alt="Zwinięta kremowa lina obok mosiężnego knagu na tekowym pokładzie jachtu w ciepłym świetle zachodu"
+        alt={t.imageAlt}
         formats={["avif", "webp"]}
         fallbackFormat="jpg"
         widths={[480, 960, 1280]}
@@ -26,12 +30,7 @@ import ropeImage from "../assets/photos/lina.png";
 
     <div class="promise__text">
       <span class="wake-point promise__wake" data-wake-point aria-hidden="true"></span>
-      <p>
-        Szukamy jachtu dopasowanego do Twojej załogi, terminu i budżetu. Dobieramy skippera, hostessę albo kucharza, dodatki na pokład i trasę, która ma sens przy aktualnym wietrze.
-      </p>
-      <p>
-        Dostajesz jedną osobę kontaktową, która zna jacht, port i ludzi. Bez porównywania dziesięciu ofert i bez niespodzianek przy odbiorze łodzi.
-      </p>
+      {t.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
     </div>
   </div>
 </section>

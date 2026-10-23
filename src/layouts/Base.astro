@@ -7,21 +7,30 @@ import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import jostLatin from "@fontsource-variable/jost/files/jost-latin-wght-normal.woff2?url";
 import jostLatinExt from "@fontsource-variable/jost/files/jost-latin-ext-wght-normal.woff2?url";
+import { alternatePaths, pagePath, toLocale, type PageKey } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
 
 interface Props {
   title: string;
   description: string;
   solidNav?: boolean;
   noindex?: boolean;
+  page?: PageKey;
 }
 
-const { title, description, solidNav = false, noindex = false } = Astro.props;
-const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
+const { title, description, solidNav = false, noindex = false, page } = Astro.props;
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+const alternates = page ? alternatePaths(page) : [];
+const switchPath = page && alternates.length > 1 ? alternates.find((alternate) => alternate.locale !== locale)!.path : pagePath("home", locale === "pl" ? "en" : "pl");
+const pathname = Astro.url.pathname;
+const canonicalPath = /^\/(en\/)?$/.test(pathname) ? pathname : pathname.replace(/\/$/, "");
+const canonicalUrl = new URL(canonicalPath, Astro.site);
 const ogImageUrl = new URL("/og-image.jpg", Astro.site);
 ---
 
 <!doctype html>
-<html lang="pl">
+<html lang={locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -35,21 +44,25 @@ const ogImageUrl = new URL("/og-image.jpg", Astro.site);
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap.xml" />
+    {!noindex && alternates.length > 1 && alternates.map((alternate) => (
+      <link rel="alternate" hreflang={alternate.locale} href={new URL(alternate.path, Astro.site)} />
+    ))}
+    {!noindex && alternates.length > 1 && <link rel="alternate" hreflang="x-default" href={new URL(alternates[0].path, Astro.site)} />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="pl_PL" />
+    <meta property="og:locale" content={t.meta.ogLocale} />
     <meta property="og:site_name" content="Kilwater" />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Kilwater, czarter jachtów z załogą. Biały jacht żaglowy na granatowym morzu w łukowym kadrze." />
+    <meta property="og:image:alt" content={t.meta.ogImageAlt} />
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
-    <a class="skip-link" href="#tresc">Przejdź do treści</a>
-    <Nav solid={solidNav} />
+    <a class="skip-link" href="#tresc">{t.meta.skipLink}</a>
+    <Nav solid={solidNav} switchPath={switchPath} />
     <main id="tresc">
       <slot />
     </main>

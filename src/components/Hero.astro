@@ -2,6 +2,10 @@
 import { Picture } from "astro:assets";
 import Logo from "./Logo.astro";
 import heroImage from "../assets/photos/hero-kilwater.png";
+import { toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
+
+const t = useTranslations(toLocale(Astro.currentLocale)).hero;
 ---
 
 <section class="hero" aria-labelledby="hero-title" style={`--hero-ratio: ${heroImage.width / heroImage.height}`} data-hero>
@@ -9,7 +13,7 @@ import heroImage from "../assets/photos/hero-kilwater.png";
     <div class="hero__media" data-hero-media>
       <Picture
         src={heroImage}
-        alt="Biały jacht żaglowy na granatowym morzu, widziany z lotu ptaka, zostawia za sobą długi zakręcający ślad piany"
+        alt={t.imageAlt}
         formats={["avif", "webp"]}
         fallbackFormat="jpg"
         widths={[640, 960, 1280]}
@@ -27,10 +31,9 @@ import heroImage from "../assets/photos/hero-kilwater.png";
 
     <div class="hero__layout" data-hero-intro>
       <div class="hero__copy">
-        <p class="label" data-hero-fade>Czarter jachtów z załogą</p>
+        <p class="label" data-hero-fade>{t.label}</p>
         <h1 id="hero-title" class="hero__title">
-          <span class="hero__line"><span data-hero-line>Zostaw ślad</span></span>
-          <span class="hero__line"><span data-hero-line>na wodzie</span></span>
+          {t.titleLines.map((line) => <span class="hero__line"><span data-hero-line>{line}</span></span>)}
         </h1>
       </div>
 
@@ -38,19 +41,19 @@ import heroImage from "../assets/photos/hero-kilwater.png";
 
       <div class="hero__aside">
         <p class="hero__lead" data-hero-fade>
-          Jachty żaglowe, katamarany i jachty motorowe w Chorwacji, Grecji, Włoszech i na Mazurach. Jeden broker prowadzi Cię od pomysłu do ostatniego zachodu słońca.
+          {t.lead}
         </p>
         <div class="hero__actions" data-hero-fade>
           <a class="button button--solid" href="#zapytanie">
-            Zaplanuj rejs
+            {t.cta}
             <span class="button__arrow" aria-hidden="true">→</span>
           </a>
-          <a class="link-underline" href="#akweny">Zobacz akweny</a>
+          <a class="link-underline" href="#akweny">{t.secondary}</a>
         </div>
       </div>
 
       <p class="hero__scroll" aria-hidden="true" data-hero-fade>
-        Przewiń
+        {t.scroll}
         <span class="hero__scroll-line"></span>
       </p>
     </div>
@@ -59,7 +62,7 @@ import heroImage from "../assets/photos/hero-kilwater.png";
       <Logo withWordmark={false} class="hero__reveal-sign" />
       <p class="hero__wordmark" aria-hidden="true" data-hero-wordmark>Kilwater</p>
       <p class="hero__reveal-text">
-        Kilwater to ślad, który jacht zostawia na wodzie. Rejs zaplanowany z nami zostaje w pamięci dużo dłużej.
+        {t.reveal}
       </p>
     </div>
   </div>

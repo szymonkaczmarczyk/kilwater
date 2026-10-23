@@ -1,0 +1,32 @@
+---
+import Base from "../layouts/Base.astro";
+import Hero from "./Hero.astro";
+import BrandPromise from "./BrandPromise.astro";
+import Destinations from "./Destinations.astro";
+import CruiseTypes from "./CruiseTypes.astro";
+import CrewExtras from "./CrewExtras.astro";
+import Voyage from "./Voyage.astro";
+import Process from "./Process.astro";
+import SampleRoutes from "./SampleRoutes.astro";
+import SeasonCalendar from "./SeasonCalendar.astro";
+import Faq from "./Faq.astro";
+import Inquiry from "./Inquiry.astro";
+import { useTranslations } from "../i18n/ui";
+
+const t = useTranslations(Astro.currentLocale).meta;
+---
+
+<Base title={t.homeTitle} description={t.homeDescription} page="home">
+  <Hero />
+  <Voyage>
+    <BrandPromise />
+    <Destinations />
+    <CruiseTypes />
+    <CrewExtras />
+  </Voyage>
+  <SampleRoutes />
+  <SeasonCalendar />
+  <Process />
+  <Faq />
+  <Inquiry />
+</Base>

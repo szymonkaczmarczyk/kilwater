@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
-import { fieldErrors, inquirySchema, type Inquiry } from "../../lib/inquiry-schema";
+import { createInquirySchema, fieldErrors, type Inquiry } from "../../lib/inquiry-schema";
+import { toLocale } from "../../i18n/locales";
 import { cruiseOptions, destinationOptions, extraOptions, nightOptions } from "../../data/inquiry-options";
 import { readEnv } from "../../lib/env";
 import { createRateLimiter } from "../../lib/rate-limit";
@@ -15,8 +16,8 @@ const json = (status: number, body: Record<string, unknown>) =>
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
 
-const labelOf = (options: readonly { value: string; label: string }[], value: string) =>
-  options.find((option) => option.value === value)?.label ?? value;
+const labelOf = (options: readonly { value: string; label: { pl: string } }[], value: string) =>
+  options.find((option) => option.value === value)?.label.pl ?? value;
 
 const inquiryText = (inquiry: Inquiry) =>
   [
@@ -32,6 +33,7 @@ const inquiryText = (inquiry: Inquiry) =>
     `Telefon: ${inquiry.phone || "nie podano"}`,
     "",
     `Wiadomość: ${inquiry.message || "brak"}`,
+    `Język strony klienta: ${inquiry.lang === "en" ? "angielski" : "polski"}`,
   ].join("\n");
 
 const deliverInquiry = async (inquiry: Inquiry) => {
@@ -85,8 +87,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return json(200, { ok: true });
   }
 
-  const parsed = inquirySchema.safeParse(payload);
-  if (!parsed.success) return json(400, { ok: false, errors: fieldErrors(parsed.error) });
+  const locale = toLocale(typeof payload === "object" && payload && "lang" in payload ? String(payload.lang) : undefined);
+  const parsed = createInquirySchema(locale).safeParse(payload);
+  if (!parsed.success) return json(400, { ok: false, errors: fieldErrors(parsed.error, locale) });
 
   const delivered = await deliverInquiry(parsed.data);
   return delivered ? json(200, { ok: true }) : json(503, { ok: false });

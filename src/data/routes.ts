@@ -1,11 +1,12 @@
+import type { Localized } from "../i18n/locales";
+
 export type RouteStop = { name: string; lat: number; lon: number; labelSide?: "left" | "right" | "above" | "below" };
-export type RouteLeg = { from: string; to: string; text: string };
+export type RouteLeg = { from: string; to: string; text: Localized<string> };
 
 export type SampleRoute = {
   slug: string;
   destination: string;
-  tab: string;
-  title: string;
+  title: Localized<string>;
   nights: number;
   stops: RouteStop[];
   legs: RouteLeg[];
@@ -15,8 +16,7 @@ export const sampleRoutes: SampleRoute[] = [
   {
     slug: "split-wyspy",
     destination: "chorwacja",
-    tab: "Chorwacja",
-    title: "Split i wyspy środkowej Dalmacji",
+    title: { pl: "Split i wyspy środkowej Dalmacji", en: "Split and the islands of central Dalmatia" },
     nights: 7,
     stops: [
       { name: "Split", lat: 43.505, lon: 16.44 },
@@ -29,20 +29,19 @@ export const sampleRoutes: SampleRoute[] = [
       { name: "Split", lat: 43.505, lon: 16.44 },
     ],
     legs: [
-      { from: "Split", to: "Milna", text: "Spokojny start po odbiorze jachtu i kolacja w kamiennym porcie na Braču." },
-      { from: "Milna", to: "Bol", text: "Wzdłuż południowego brzegu Braču aż do plaży Zlatni Rat." },
-      { from: "Bol", to: "Hvar", text: "Przez kanał na Hvar i wieczór w najbardziej znanym miasteczku Dalmacji." },
-      { from: "Hvar", to: "Vis", text: "Najdalej wysunięta wyspa, długo zamknięta dla turystów, z czystą wodą i ciszą." },
-      { from: "Vis", to: "Komiža", text: "Dookoła wyspy, z możliwością wizyty w Modrej Špilji na Biševie." },
-      { from: "Komiža", to: "Maslinica", text: "Najdłuższy przelot, z kąpielą po drodze i nocą w zielonej zatoce Šolty." },
-      { from: "Maslinica", to: "Split", text: "Krótki odcinek do mariny i zdanie jachtu." },
+      { from: "Split", to: "Milna", text: { pl: "Spokojny start po odbiorze jachtu i kolacja w kamiennym porcie na Braču.", en: "An easy start after check-in and dinner in a stone harbour on Brač." } },
+      { from: "Milna", to: "Bol", text: { pl: "Wzdłuż południowego brzegu Braču aż do plaży Zlatni Rat.", en: "Along the south coast of Brač to the Zlatni Rat beach." } },
+      { from: "Bol", to: "Hvar", text: { pl: "Przez kanał na Hvar i wieczór w najbardziej znanym miasteczku Dalmacji.", en: "Across the channel to Hvar and an evening in Dalmatia's best known town." } },
+      { from: "Hvar", to: "Vis", text: { pl: "Najdalej wysunięta wyspa, długo zamknięta dla turystów, z czystą wodą i ciszą.", en: "The outermost island, long closed to tourists, with clear water and quiet." } },
+      { from: "Vis", to: "Komiža", text: { pl: "Dookoła wyspy, z możliwością wizyty w Modrej Špilji na Biševie.", en: "Around the island, with an optional visit to the Blue Cave on Biševo." } },
+      { from: "Komiža", to: "Maslinica", text: { pl: "Najdłuższy przelot, z kąpielą po drodze i nocą w zielonej zatoce Šolty.", en: "The longest passage, with a swim on the way and a night in a green bay on Šolta." } },
+      { from: "Maslinica", to: "Split", text: { pl: "Krótki odcinek do mariny i zdanie jachtu.", en: "A short leg to the marina and check-out." } },
     ],
   },
   {
     slug: "cyklady-lavrio",
     destination: "grecja",
-    tab: "Grecja",
-    title: "Zachodnie Cyklady z Lavrio",
+    title: { pl: "Zachodnie Cyklady z Lavrio", en: "The Western Cyclades from Lavrio" },
     nights: 7,
     stops: [
       { name: "Lavrio", lat: 37.713, lon: 24.057, labelSide: "left" },
@@ -55,20 +54,19 @@ export const sampleRoutes: SampleRoute[] = [
       { name: "Lavrio", lat: 37.713, lon: 24.057, labelSide: "left" },
     ],
     legs: [
-      { from: "Lavrio", to: "Kea", text: "Krótki przelot i kolacja w zatoce Vourkari." },
-      { from: "Kea", to: "Kythnos", text: "Kotwica przy piaszczystym przesmyku Kolona, z wodą po obu stronach." },
-      { from: "Kythnos", to: "Serifos", text: "Port Livadi i wieczór w białej Chorze na szczycie wzgórza." },
-      { from: "Serifos", to: "Sifnos", text: "Wyspa ceramiki i jednej z najlepszych kuchni na Cykladach." },
-      { from: "Sifnos", to: "Syros", text: "Ermoupoli, neoklasyczna stolica Cykladów z marmurowym rynkiem." },
-      { from: "Syros", to: "Kea", text: "Dłuższy przelot na północny zachód, z powrotem w stronę lądu." },
-      { from: "Kea", to: "Lavrio", text: "Powrót do mariny i zdanie jachtu." },
+      { from: "Lavrio", to: "Kea", text: { pl: "Krótki przelot i kolacja w zatoce Vourkari.", en: "A short passage and dinner in Vourkari bay." } },
+      { from: "Kea", to: "Kythnos", text: { pl: "Kotwica przy piaszczystym przesmyku Kolona, z wodą po obu stronach.", en: "Anchoring at the Kolona sandbar, with water on both sides." } },
+      { from: "Kythnos", to: "Serifos", text: { pl: "Port Livadi i wieczór w białej Chorze na szczycie wzgórza.", en: "Livadi harbour and an evening in the white Chora on the hilltop." } },
+      { from: "Serifos", to: "Sifnos", text: { pl: "Wyspa ceramiki i jednej z najlepszych kuchni na Cykladach.", en: "The island of pottery and some of the best food in the Cyclades." } },
+      { from: "Sifnos", to: "Syros", text: { pl: "Ermoupoli, neoklasyczna stolica Cykladów z marmurowym rynkiem.", en: "Ermoupoli, the neoclassical capital of the Cyclades with a marble square." } },
+      { from: "Syros", to: "Kea", text: { pl: "Dłuższy przelot na północny zachód, z powrotem w stronę lądu.", en: "A longer passage north west, back towards the mainland." } },
+      { from: "Kea", to: "Lavrio", text: { pl: "Powrót do mariny i zdanie jachtu.", en: "Back to the marina and check-out." } },
     ],
   },
   {
     slug: "amalfi-procida",
     destination: "wlochy",
-    tab: "Włochy",
-    title: "Zatoka Neapolitańska i Wybrzeże Amalfi",
+    title: { pl: "Zatoka Neapolitańska i Wybrzeże Amalfi", en: "The Bay of Naples and the Amalfi Coast" },
     nights: 7,
     stops: [
       { name: "Procida", lat: 40.762, lon: 14.024 },
@@ -81,20 +79,19 @@ export const sampleRoutes: SampleRoute[] = [
       { name: "Procida", lat: 40.762, lon: 14.024 },
     ],
     legs: [
-      { from: "Procida", to: "Ischia", text: "Krótki przelot, źródła termalne i Zamek Aragoński na skale." },
-      { from: "Ischia", to: "Capri", text: "Przez zatokę na Capri, z kąpielą przy skałach Faraglioni." },
-      { from: "Capri", to: "Positano", text: "Wybrzeże Amalfi od strony morza i kolorowe domy na klifie." },
-      { from: "Positano", to: "Amalfi", text: "Krótki odcinek z postojem przy fiordzie Furore." },
-      { from: "Amalfi", to: "Nerano", text: "Zatoka Ieranto i spaghetti z cukinią, z którego słynie Nerano." },
-      { from: "Nerano", to: "Sorrento", text: "Wieczór w Sorrento z widokiem na Wezuwiusz po drugiej stronie zatoki." },
-      { from: "Sorrento", to: "Procida", text: "Powrót przez zatokę i zdanie jachtu." },
+      { from: "Procida", to: "Ischia", text: { pl: "Krótki przelot, źródła termalne i Zamek Aragoński na skale.", en: "A short passage, hot springs and the Aragonese Castle on its rock." } },
+      { from: "Ischia", to: "Capri", text: { pl: "Przez zatokę na Capri, z kąpielą przy skałach Faraglioni.", en: "Across the bay to Capri, with a swim by the Faraglioni rocks." } },
+      { from: "Capri", to: "Positano", text: { pl: "Wybrzeże Amalfi od strony morza i kolorowe domy na klifie.", en: "The Amalfi Coast from the sea and colourful houses on the cliff." } },
+      { from: "Positano", to: "Amalfi", text: { pl: "Krótki odcinek z postojem przy fiordzie Furore.", en: "A short leg with a stop at the Furore fjord." } },
+      { from: "Amalfi", to: "Nerano", text: { pl: "Zatoka Ieranto i spaghetti z cukinią, z którego słynie Nerano.", en: "Ieranto bay and the courgette spaghetti Nerano is famous for." } },
+      { from: "Nerano", to: "Sorrento", text: { pl: "Wieczór w Sorrento z widokiem na Wezuwiusz po drugiej stronie zatoki.", en: "An evening in Sorrento with Vesuvius across the bay." } },
+      { from: "Sorrento", to: "Procida", text: { pl: "Powrót przez zatokę i zdanie jachtu.", en: "Back across the bay and check-out." } },
     ],
   },
   {
     slug: "mazury-gizycko",
     destination: "mazury",
-    tab: "Mazury",
-    title: "Wielkie Jeziora Mazurskie z Giżycka",
+    title: { pl: "Wielkie Jeziora Mazurskie z Giżycka", en: "The Great Masurian Lakes from Giżycko" },
     nights: 7,
     stops: [
       { name: "Giżycko", lat: 54.038, lon: 21.765 },
@@ -107,13 +104,13 @@ export const sampleRoutes: SampleRoute[] = [
       { name: "Giżycko", lat: 54.038, lon: 21.765 },
     ],
     legs: [
-      { from: "Giżycko", to: "Rydzewo", text: "Przez Niegocin do spokojnej przystani na skraju jeziora Boczne." },
-      { from: "Rydzewo", to: "Mikołajki", text: "Przez Jagodne i Tałty do żeglarskiej stolicy Mazur." },
-      { from: "Mikołajki", to: "Wierzba", text: "Na Bełdany i nocleg w Wierzbie, na skraju Puszczy Piskiej." },
-      { from: "Wierzba", to: "Ruciane-Nida", text: "Krętymi Bełdanami i przez śluzę Guzianka do Ruciane." },
-      { from: "Ruciane-Nida", to: "Pranie", text: "Jezioro Nidzkie, leśna cisza i leśniczówka Gałczyńskiego." },
-      { from: "Pranie", to: "Mikołajki", text: "Powrót przez Guziankę i Bełdany." },
-      { from: "Mikołajki", to: "Giżycko", text: "Ostatni odcinek na północ i zdanie jachtu." },
+      { from: "Giżycko", to: "Rydzewo", text: { pl: "Przez Niegocin do spokojnej przystani na skraju jeziora Boczne.", en: "Across Lake Niegocin to a quiet harbour at the edge of Lake Boczne." } },
+      { from: "Rydzewo", to: "Mikołajki", text: { pl: "Przez Jagodne i Tałty do żeglarskiej stolicy Mazur.", en: "Through lakes Jagodne and Tałty to the sailing capital of Masuria." } },
+      { from: "Mikołajki", to: "Wierzba", text: { pl: "Na Bełdany i nocleg w Wierzbie, na skraju Puszczy Piskiej.", en: "Onto Lake Bełdany and a night in Wierzba, at the edge of the Pisz Forest." } },
+      { from: "Wierzba", to: "Ruciane-Nida", text: { pl: "Krętymi Bełdanami i przez śluzę Guzianka do Ruciane.", en: "Along winding Bełdany and through the Guzianka lock to Ruciane." } },
+      { from: "Ruciane-Nida", to: "Pranie", text: { pl: "Jezioro Nidzkie, leśna cisza i leśniczówka Gałczyńskiego.", en: "Lake Nidzkie, forest quiet and the poet Gałczyński's forester's lodge." } },
+      { from: "Pranie", to: "Mikołajki", text: { pl: "Powrót przez Guziankę i Bełdany.", en: "Back through Guzianka and Bełdany." } },
+      { from: "Mikołajki", to: "Giżycko", text: { pl: "Ostatni odcinek na północ i zdanie jachtu.", en: "The last leg north and check-out." } },
     ],
   },
 ];

@@ -43,6 +43,17 @@ test.describe.serial("endpoint /api/zapytanie", () => {
     expect(response.status()).toBe(200);
   });
 
+  test("zwraca komunikaty po angielsku dla lang en", async ({ request }) => {
+    const response = await request.post("/api/zapytanie", {
+      data: { ...validInquiry(), lang: "en", email: "zly-adres", consent: false, role: "admin" },
+    });
+    expect(response.status()).toBe(400);
+    const body = await response.json();
+    expect(body.errors.email).toBe("Enter a valid email address, e.g. john@example.com.");
+    expect(body.errors.consent).toContain("Accept the terms");
+    expect(body.errors.role).toBe("This field is not supported.");
+  });
+
   test("ogranicza liczbę zapytań z jednego adresu", async ({ request }) => {
     const statuses: number[] = [];
     for (let attempt = 0; attempt < 6; attempt += 1) {

@@ -12,7 +12,8 @@
     "images:strip": "node scripts/strip-image-metadata.mjs",
     "assistant:model": "node scripts/download-assistant-model.mjs",
     "assistant:eval": "playwright test --config playwright.eval.config.ts",
-    "routes:map": "node scripts/build-route-maps.mjs"
+    "routes:map": "node scripts/build-route-maps.mjs",
+    "check": "astro check"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.9",
@@ -29,7 +30,9 @@
     "sharp@0.35.5": true
   },
   "devDependencies": {
-    "@playwright/test": "^1.64.0"
+    "@astrojs/check": "^0.9.12",
+    "@playwright/test": "^1.64.0",
+    "typescript": "^6.0.3"
   },
   "license": "MIT",
   "author": "Szymon Kaczmarczyk"

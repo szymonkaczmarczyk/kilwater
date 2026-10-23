@@ -1,5 +1,6 @@
 ---
 layout: ../layouts/LegalLayout.astro
+page: terms
 title: Regulamin serwisu
 metaTitle: Regulamin serwisu - Kilwater
 description: Zasady korzystania ze strony Kilwater i formularza zapytania o czarter jachtu, wymagania techniczne, reklamacje i prawa konsumenta.

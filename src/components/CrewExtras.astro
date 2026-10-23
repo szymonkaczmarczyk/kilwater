@@ -3,19 +3,23 @@ import { Picture } from "astro:assets";
 import LineIcon, { type IconName } from "./LineIcon.astro";
 import extrasImage from "../assets/photos/dodatki.webp";
 import { crewRoles, extraItems } from "../data/offer";
+import { toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
 
-const crew: readonly { icon: IconName; role: string; text: string }[] = crewRoles;
-const extras: readonly { icon: IconName; name: string; text: string }[] = extraItems;
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale).crew;
+const crew: readonly { icon: IconName; role: string; text: string }[] = crewRoles[locale];
+const extras: readonly { icon: IconName; name: string; text: string }[] = extraItems[locale];
 ---
 
 <section class="crew" id="zaloga" aria-labelledby="crew-title">
   <div class="crew__inner">
     <header class="crew__head">
-      <p class="label">Załoga i dodatki</p>
-      <h2 id="crew-title" class="section-title">Ludzie i drobiazgi,<br />które robią rejs</h2>
+      <p class="label">{t.label}</p>
+      <h2 id="crew-title" class="section-title">{t.titleLines[0]}<br />{t.titleLines[1]}</h2>
       <p class="section-lead crew__lead">
         <span class="wake-point crew__wake" data-wake-point="end" aria-hidden="true"></span>
-        Dobierasz tyle załogi i dodatków, ile potrzebujesz. Resztę zostawiasz nam i dostajesz jedną, zamkniętą ofertę.
+        {t.lead}
       </p>
     </header>
 
@@ -33,7 +37,7 @@ const extras: readonly { icon: IconName; name: string; text: string }[] = extraI
       <figure class="frame frame--arch crew__frame" data-reveal>
         <Picture
           src={extrasImage}
-          alt="Dwie deski SUP, maski i płetwy na tekowym dziobie jachtu nad turkusową, przejrzystą wodą"
+          alt={t.imageAlt}
           formats={["avif", "webp"]}
           fallbackFormat="jpg"
           widths={[480, 896]}
@@ -44,7 +48,7 @@ const extras: readonly { icon: IconName; name: string; text: string }[] = extraI
       </figure>
 
       <div class="crew__extras-copy">
-        <h3 class="crew__extras-title">Dodatki na pokład</h3>
+        <h3 class="crew__extras-title">{t.extrasTitle}</h3>
         <ul class="extras">
           {extras.map((extra) => (
             <li class="extra">
@@ -57,7 +61,7 @@ const extras: readonly { icon: IconName; name: string; text: string }[] = extraI
           ))}
         </ul>
         <a class="button button--solid crew__cta" href="#zapytanie">
-          Skomponuj rejs z dodatkami
+          {t.cta}
           <span class="button__arrow" aria-hidden="true">→</span>
         </a>
       </div>

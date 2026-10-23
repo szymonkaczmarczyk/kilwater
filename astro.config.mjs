@@ -6,4 +6,9 @@ export default defineConfig({
   adapter: node({ mode: "standalone" }),
   server: { port: 4520 },
   devToolbar: { enabled: false },
+  i18n: {
+    defaultLocale: "pl",
+    locales: ["pl", "en"],
+    routing: { prefixDefaultLocale: false },
+  },
 });

@@ -1,33 +1,39 @@
 ---
 import Base from "./Base.astro";
+import { pagePath, toLocale, type PageKey } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
 
 interface Props {
   frontmatter: {
     title: string;
     description: string;
     metaTitle: string;
+    page: PageKey;
   };
   headings: { depth: number; slug: string; text: string }[];
 }
 
 const { frontmatter, headings } = Astro.props;
 const sections = headings.filter((heading) => heading.depth === 2);
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale).legal;
 ---
 
-<Base title={frontmatter.metaTitle} description={frontmatter.description} solidNav>
+<Base title={frontmatter.metaTitle} description={frontmatter.description} page={frontmatter.page} solidNav>
   <article class="legal">
     <header class="legal__head">
-      <a class="legal__back" href="/">
+      <a class="legal__back" href={pagePath("home", locale)}>
         <span aria-hidden="true">←</span>
-        Wróć na stronę główną
+        {t.back}
       </a>
-      <p class="label">Dokumenty</p>
+      <p class="label">{t.label}</p>
       <h1 class="legal__title">{frontmatter.title}</h1>
-      <p class="legal__meta">Obowiązuje od: <span class="legal__placeholder">[[data wejścia w życie]]</span></p>
+      <p class="legal__meta">{t.validFrom} <span class="legal__placeholder">{t.validFromPlaceholder}</span></p>
+      {t.translationNote && <p class="legal__meta">{t.translationNote}</p>}
     </header>
 
-    <nav class="legal__toc" aria-label="Spis treści">
-      <p class="legal__toc-title">Spis treści</p>
+    <nav class="legal__toc" aria-label={t.toc}>
+      <p class="legal__toc-title">{t.toc}</p>
       <ol>
         {sections.map((section) => (
           <li><a href={`#${section.slug}`}>{section.text}</a></li>

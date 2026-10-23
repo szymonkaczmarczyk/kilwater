@@ -59,8 +59,11 @@ produkcji bez konfiguracji endpoint zwraca `503`, żeby zapytania nie ginęły p
 | Adres | Co to jest |
 |---|---|
 | `/` | Landing: hero, czym jest Kilwater, akweny, rodzaje rejsów, załoga i dodatki, przykładowe trasy, kalendarz sezonu, jak to działa, FAQ, formularz |
-| `/polityka-prywatnosci` | Polityka prywatności zgodna z RODO, ze spisem treści |
-| `/regulamin` | Regulamin serwisu według ustawy o świadczeniu usług drogą elektroniczną |
+| `/en/` | Wersja angielska landingu z tymi samymi sekcjami, formularzem i asystentem |
+| `/poradnik` | Poradnik: lista artykułów przed pierwszym rejsem |
+| `/poradnik/<artykuł>` | Artykuł ze spisem treści, wezwaniem do zapytania i powiązanymi tekstami |
+| `/polityka-prywatnosci` | Polityka prywatności zgodna z RODO, ze spisem treści (`/en/privacy-policy` po angielsku) |
+| `/regulamin` | Regulamin serwisu według ustawy o świadczeniu usług drogą elektroniczną (`/en/terms` po angielsku) |
 | każdy inny adres | Strona 404 „Ten kurs prowadzi prosto we mgłę” |
 | `POST /api/zapytanie` | Przyjęcie zapytania o rejs |
 | `POST /api/asystent` | Odpowiedź asystenta na pytanie o rejs (`GET` wczytuje model z wyprzedzeniem) |
@@ -89,6 +92,25 @@ produkcji bez konfiguracji endpoint zwraca `503`, żeby zapytania nie ginęły p
 - **Stopka** - zaproszenie z przyciskiem „Zaplanuj swój rejs”, informacją, że zapytanie nic nie kosztuje, i skrótami
   akwenów, które od razu ustawiają akwen w formularzu. Litery KILWATER wynurzają się z wody, gdy przepływa pod nimi jacht.
 
+**Wersja angielska**
+
+- Adresy `/en/…`, przełącznik PL/EN w menu prowadzi do odpowiednika bieżącej strony, a `hreflang` i mapa strony
+  wskazują obie wersje.
+- Teksty interfejsu są w `src/i18n/ui.ts` (słownik polski jest wzorem, a TypeScript wymaga, żeby angielski miał te
+  same klucze), treści w `src/data/*` jako pary `{ pl, en }`.
+- Formularz i asystent wysyłają pole `lang`, więc komunikaty błędów i odpowiedzi asystenta są w języku strony.
+  E-mail do brokera zostaje po polsku z dopiskiem języka klienta.
+- Dokumenty prawne po angielsku są tłumaczeniem informacyjnym. Wiążąca jest wersja polska.
+
+**Poradnik**
+
+- Pięć artykułów w Markdownie (`src/content/poradnik/`): pierwszy czarter krok po kroku, wybór akwenu, typy jachtów,
+  co spakować i rejs bez patentu. Treść oparta na danych strony i ogólnej wiedzy żeglarskiej, bez cen i obietnic.
+- Lista w układzie 1-2-2 z kartami różnej wielkości, artykuł ze spisem treści, czasem czytania, danymi
+  strukturalnymi `Article` i `BreadcrumbList`, wezwaniem do zapytania i dwoma powiązanymi tekstami.
+- Asystent zna każdy artykuł i odsyła do niego przy pasujących pytaniach. Test e2e pilnuje, żeby nowy artykuł nie
+  został bez odpowiedzi w bazie asystenta.
+
 Wszystkie animacje wyłączają się przy `prefers-reduced-motion`. Strona wtedy pokazuje stan końcowy od razu.
 
 ## Zrzuty ekranu
@@ -107,9 +129,13 @@ Wszystkie animacje wyłączają się przy `prefers-reduced-motion`. Strona wtedy
 |---|---|
 | ![Zakładki tras i mapa pętli z Splitu po wyspach Dalmacji obok planu dzień po dniu](docs/screenshots/trasy.png) | ![Kalendarz sezonu z wybranym wrześniem w Grecji i opisem wiatru oraz wody](docs/screenshots/kalendarz-sezonu.png) |
 
-| FAQ i asystent | Trasa na telefonie |
+| FAQ i asystent | Wersja angielska |
 |---|---|
-| ![Pytania przed rejsem z oknem asystenta i rozwijanymi odpowiedziami](docs/screenshots/faq.png) | ![Mapa trasy po Dalmacji i plan dni na telefonie](docs/screenshots/mobile-trasy.png) |
+| ![Pytania przed rejsem z oknem asystenta i rozwijanymi odpowiedziami](docs/screenshots/faq.png) | ![Angielska strona główna z jachtem w łukowym oknie i przełącznikiem PL w menu](docs/screenshots/wersja-angielska.png) |
+
+| Poradnik | Artykuł |
+|---|---|
+| ![Lista artykułów poradnika z dużą kartą pierwszego czarteru](docs/screenshots/poradnik.png) | ![Artykuł o wyborze akwenu ze spisem treści po lewej](docs/screenshots/artykul.png) |
 
 | Jak to działa | Stopka |
 |---|---|
@@ -128,6 +154,10 @@ Wszystkie animacje wyłączają się przy `prefers-reduced-motion`. Strona wtedy
 | Hero | Menu |
 |---|---|
 | ![Hero na telefonie z jachtem w łukowym oknie](docs/screenshots/mobile-hero.jpg) | ![Pełnoekranowe menu z przyciskiem Zamknij po lewej](docs/screenshots/mobile-menu.png) |
+
+| Trasa | Artykuł poradnika |
+|---|---|
+| ![Mapa trasy po Dalmacji i plan dni na telefonie](docs/screenshots/mobile-trasy.png) | ![Artykuł o rejsie bez patentu na telefonie](docs/screenshots/mobile-artykul.png) |
 
 Zrzuty pokazują stan końcowy animacji. Dane w formularzu są
 przykładowe.
@@ -155,8 +185,9 @@ HOST=0.0.0.0 PORT=8080 node ./dist/server/entry.mjs
 | `npm run build` | Build: statyczne strony w `dist/client`, serwer w `dist/server` |
 | `npm run preview` | Podgląd buildu |
 | `npm run assistant:model` | Pobiera model asystenta `Xenova/bge-m3` do `models/` (raz, także przy wdrożeniu) |
-| `npm run test:e2e` | 40 testów Playwright na buildzie produkcyjnym (port 4521) |
-| `npm run assistant:eval` | 48 pytań kontrolnych: parafrazy z bazy, pytania bliskie tematu bez odpowiedzi, pytania spoza tematu i filtr danych kontaktowych |
+| `npm run check` | Sprawdzenie typów TypeScript w plikach `.astro` i `.ts` (`astro check`) |
+| `npm run test:e2e` | 51 testów Playwright na buildzie produkcyjnym (port 4521) |
+| `npm run assistant:eval` | 67 pytań kontrolnych po polsku i angielsku: parafrazy z bazy, pytania bliskie tematu bez odpowiedzi, pytania spoza tematu i filtr danych kontaktowych |
 | `npm run brand:assets` | Generuje favicon (`.ico`, `.svg`, ikonę Apple) i obraz OG 1200x630 ze znaku logo |
 | `npm run routes:map` | Pobiera z OpenStreetMap linie brzegowe, jeziora i kanały dla tras, wyznacza drogę wodą i zapisuje `src/data/route-maps.json` |
 | `npm run images:strip` | Usuwa metadane (EXIF, XMP, C2PA) ze zdjęć w `src/assets/photos`, `public` i `docs/screenshots` |
@@ -216,25 +247,28 @@ i uruchom `npm run assistant:eval`.
 
 ```
 src/
-  pages/            index, 404, polityka-prywatnosci.md, regulamin.md, sitemap.xml.ts
+  pages/            index, 404, polityka-prywatnosci.md, regulamin.md, sitemap.xml.ts,
+                    en/ (index, privacy-policy.md, terms.md), poradnik/ (index, [slug])
   pages/api/        zapytanie.ts - endpoint formularza, asystent.ts - endpoint asystenta
   components/       sekcje landingu (Hero, Destinations, CruiseTypes, CrewExtras, SampleRoutes,
                     SeasonCalendar, Process, Faq, Inquiry),
-                    Voyage (linia fali), Nav, Footer, Logo, LineIcon
+                    HomePage (wspólna strona główna PL i EN), Voyage (linia fali), Nav, Footer, Logo, LineIcon
+  content/poradnik/ artykuły poradnika w Markdownie (schemat w src/content.config.ts)
+  i18n/             locales.ts (języki i adresy), ui.ts (teksty interfejsu), inquiry-messages.ts (komunikaty formularza)
   layouts/          Base (meta, nawigacja, stopka), LegalLayout (dokumenty ze spisem treści)
   data/             company.ts, inquiry-options.ts, logo-mark.ts - jedno źródło danych i znaku logo,
                     offer.ts, routes.ts, seasons.ts, faq.ts - treść oferty, tras, kalendarza sezonu i FAQ,
                     route-maps.json - mapy tras z OpenStreetMap (generowane przez npm run routes:map),
                     assistant-answers.ts - baza odpowiedzi asystenta
   lib/              inquiry-schema.ts - walidacja zod, assistant.ts - model lokalny i dopasowanie pytań,
-                    env.ts, rate-limit.ts
+                    guide.ts - artykuły poradnika, env.ts, rate-limit.ts
   scripts/          motion.ts (GSAP, Lenis, kotwice), reveal.ts (odsłanianie i paralaksa)
   styles/           tokens.css (kolory, typografia, odstępy), global.css
   assets/photos/    zdjęcia źródłowe, optymalizowane przy buildzie
 public/             favicon, apple-touch-icon, og-image.jpg, robots.txt
 scripts/            brand-assets.mjs, strip-image-metadata.mjs, download-assistant-model.mjs,
                     build-route-maps.mjs
-tests/e2e/          formularz, API, strony i SEO, nawigacja, trasy, sezon, FAQ i asystent
+tests/e2e/          formularz, API, strony i SEO, nawigacja, trasy, sezon, FAQ, asystent, wersja angielska, poradnik
 tests/eval/         pytania kontrolne jakości odpowiedzi asystenta
 models/             model asystenta pobierany przez npm run assistant:model (poza repozytorium)
 docs/

@@ -1,5 +1,6 @@
 ---
 layout: ../layouts/LegalLayout.astro
+page: privacy
 title: Polityka prywatności
 metaTitle: Polityka prywatności - Kilwater
 description: Jak Kilwater przetwarza dane osobowe z formularza zapytania o czarter jachtu, komu je przekazuje, jak długo przechowuje i jakie masz prawa zgodnie z RODO.

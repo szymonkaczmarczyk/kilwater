@@ -2,6 +2,15 @@
 import { sampleRoutes, type RouteStop } from "../data/routes";
 import { logoMark } from "../data/logo-mark";
 import routeMaps from "../data/route-maps.json";
+import { destinationTexts } from "../data/offer";
+import { sectionHref, toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale).routes;
+const decimalSeparator = locale === "pl" ? "," : ".";
+const tabNameOf = (destination: string) =>
+  destinationTexts[locale].find((item) => item.slug === destination)?.name ?? destination;
 
 const mapWidth = 600;
 const mapHeight = 460;
@@ -29,11 +38,11 @@ const projectRoute = (stops: RouteStop[]) => {
   const gridStep = spanY > 0.5 ? 0.2 : 0.1;
   const latLines: { y: number; label: string }[] = [];
   for (let lat = Math.ceil((latMin - 0.3) / gridStep) * gridStep; lat <= latMax + 0.3; lat += gridStep) {
-    latLines.push({ y: toPoint(lat, lonMin).y, label: `${lat.toFixed(1).replace(".", ",")}° N` });
+    latLines.push({ y: toPoint(lat, lonMin).y, label: `${lat.toFixed(1).replace(".", decimalSeparator)}° N` });
   }
   const lonLines: { x: number; label: string }[] = [];
   for (let lon = Math.ceil((lonMin - 0.4) / gridStep) * gridStep; lon <= lonMax + 0.4; lon += gridStep) {
-    lonLines.push({ x: toPoint(latMin, lon).x, label: `${lon.toFixed(1).replace(".", ",")}° E` });
+    lonLines.push({ x: toPoint(latMin, lon).x, label: `${lon.toFixed(1).replace(".", decimalSeparator)}° E` });
   }
   return { toPoint, latLines, lonLines };
 };
@@ -114,21 +123,33 @@ const routes = sampleRoutes.map((route) => {
     water: toPathData(geography.water, toPoint, true),
     waterways: toPathData(geography.waterways, toPoint, false),
   };
-  return { ...route, latLines, lonLines, legPaths, fullPath, uniqueStops, map, home: route.stops[0].name };
+  return {
+    ...route,
+    tab: tabNameOf(route.destination),
+    title: route.title[locale],
+    legs: route.legs.map((leg) => ({ ...leg, text: leg.text[locale] })),
+    latLines,
+    lonLines,
+    legPaths,
+    fullPath,
+    uniqueStops,
+    map,
+    home: route.stops[0].name,
+  };
 });
 ---
 
 <section class="routes" id="trasy" aria-labelledby="routes-title" data-routes>
   <div class="routes__inner">
     <header class="routes__head">
-      <p class="label">Przykładowe trasy</p>
-      <h2 id="routes-title" class="section-title">Tydzień na wodzie,<br />dzień po dniu</h2>
+      <p class="label">{t.label}</p>
+      <h2 id="routes-title" class="section-title">{t.titleLines[0]}<br />{t.titleLines[1]}</h2>
       <p class="section-lead routes__lead">
-        Cztery pętle, od których zaczynamy planowanie. Każdą dopasujemy do pogody, tempa i Twojej załogi.
+        {t.lead}
       </p>
     </header>
 
-    <div class="routes__tabs" role="tablist" aria-label="Akwen trasy">
+    <div class="routes__tabs" role="tablist" aria-label={t.tabsAria}>
       {routes.map((route, index) => (
         <button
           class="routes__tab"
@@ -141,7 +162,7 @@ const routes = sampleRoutes.map((route) => {
           data-route-tab
         >
           <span class="routes__tab-name">{route.tab}</span>
-          <span class="routes__tab-meta">{route.nights} nocy</span>
+          <span class="routes__tab-meta">{t.nights(route.nights)}</span>
         </button>
       ))}
     </div>
@@ -156,7 +177,7 @@ const routes = sampleRoutes.map((route) => {
         data-route-panel
       >
         <figure class="route__map">
-          <svg viewBox={`0 0 ${mapWidth} ${mapHeight}`} role="img" aria-label={`Mapa trasy: ${route.stops.map((stop) => stop.name).join(", ")}`}>
+          <svg viewBox={`0 0 ${mapWidth} ${mapHeight}`} role="img" aria-label={t.mapAria(route.stops.map((stop) => stop.name).join(", "))}>
             <g class="route__geography" aria-hidden="true">
               {route.map.isLakeland && <rect class="route__land" width={mapWidth} height={mapHeight} />}
               {route.map.land && <path class="route__land route__coast" d={route.map.land} />}
@@ -210,24 +231,24 @@ const routes = sampleRoutes.map((route) => {
             </g>
           </svg>
           <figcaption class="route__caption">
-            Mapa poglądowa, nie mapa nawigacyjna. Dane mapy © <a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap</a>.
+            {t.caption} <a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap</a>.
           </figcaption>
         </figure>
 
         <div class="route__plan">
           <h3 class="route__title">{route.title}</h3>
-          <p class="route__meta">{route.nights} nocy · start i meta: {route.home}</p>
+          <p class="route__meta">{t.meta(route.nights, route.home)}</p>
           <ol class="route__legs">
             {route.legs.map((leg, legIndex) => (
               <li class="route__day" tabindex="0" data-route-day={legIndex} data-from={leg.from} data-to={leg.to}>
-                <span class="route__day-number">Dzień {legIndex + 1}</span>
+                <span class="route__day-number">{t.day(legIndex + 1)}</span>
                 <span class="route__day-path">{leg.from} → {leg.to}</span>
                 <span class="route__day-text">{leg.text}</span>
               </li>
             ))}
           </ol>
-          <a class="button route__cta" href={`/?akwen=${route.destination}&trasa=${route.slug}#zapytanie`}>
-            Zapytaj o tę trasę
+          <a class="button route__cta" href={sectionHref(locale, "zapytanie", { akwen: route.destination, trasa: route.slug })}>
+            {t.cta}
             <span class="button__arrow" aria-hidden="true">→</span>
           </a>
         </div>

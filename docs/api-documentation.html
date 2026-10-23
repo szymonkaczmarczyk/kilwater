@@ -130,7 +130,7 @@ http://localhost:4520   (lokalnie, npm run dev)</pre>
   <li><a href="#auth">Autoryzacja i limity</a></li>
   <li><a href="#conv">Konwencje i błędy</a></li>
   <li><a href="#inquiry">POST /api/zapytanie</a></li>
-  <li><a href="#values">Wartości pól wyboru i przykład</a></li>
+  <li><a href="#values">Wartości pól wyboru</a></li>
   <li><a href="#responses">Odpowiedzi</a></li>
   <li><a href="#client">Wysyłka z własnej strony</a></li>
   <li><a href="#delivery">Dostarczanie zapytań</a></li>
@@ -187,7 +187,7 @@ http://localhost:4520   (lokalnie, npm run dev)</pre>
     <tr><td>Daty</td><td>Dzień bez godziny w formacie <code>YYYY-MM-DD</code>, np. <code>2027-06-12</code>. Porównanie z dniem dzisiejszym w UTC.</td></tr>
     <tr><td>Wartości wyboru</td><td>Akwen, długość, rodzaj rejsu i dodatki przyjmują stałe identyfikatory (małe litery, myślniki). Pełna lista w sekcji „Wartości pól wyboru”.</td></tr>
     <tr><td>Teksty</td><td>Spacje na początku i końcu pól tekstowych są usuwane przed walidacją.</td></tr>
-    <tr><td>Język</td><td>Komunikaty błędów są po polsku i mówią, co poprawić. Formularz pokazuje je bez zmian pod polami.</td></tr>
+    <tr><td>Język</td><td>Komunikaty są w języku z pola <code>lang</code> (<code>pl</code> domyślnie albo <code>en</code>) i mówią, co poprawić. Formularz pokazuje je bez zmian pod polami.</td></tr>
   </table>
   <p>Odpowiedź zawsze ma pole <code>ok</code>. Pole <code>errors</code> pojawia się tylko przy błędach walidacji:</p>
 <pre>{"ok": false, "errors": {"email": "Podaj poprawny adres e-mail, np. jan@przyklad.pl."}}</pre>
@@ -225,13 +225,33 @@ http://localhost:4520   (lokalnie, npm run dev)</pre>
     <tr><td><code>message</code></td><td>nie</td><td>Wiadomość, maksymalnie 1000 znaków.</td></tr>
     <tr><td><code>consent</code></td><td>tak</td><td>Musi mieć wartość <code>true</code>: akceptacja regulaminu i informacji z polityki prywatności.</td></tr>
     <tr><td><code>website</code></td><td>nie</td><td>Pułapka na boty, zawsze puste. Patrz „Autoryzacja i limity”.</td></tr>
+    <tr><td><code>lang</code></td><td>nie</td><td>Język strony: <code>pl</code> (domyślnie) albo <code>en</code>. W tym języku wracają komunikaty błędów.</td></tr>
   </table>
+  <div class="keep">
+  <h4>Przykład żądania</h4>
+  <p>Treść żądania <code>POST</code> z nagłówkiem <code>Content-Type: application/json</code>, ze wszystkimi polami:</p>
+<pre>{
+  "destination": "chorwacja",
+  "startDate": "2027-06-12",
+  "nights": "7",
+  "guests": 6,
+  "cruiseType": "ze-skipperem",
+  "extras": ["sup", "transfer"],
+  "name": "Anna Kowalska",
+  "email": "anna@example.com",
+  "phone": "+48 600 000 000",
+  "message": "Pierwszy rejs, dwoje dzieci.",
+  "consent": true,
+  "website": "",
+  "lang": "pl"
+}</pre>
+  </div>
 
 </section>
 
 <section id="values">
   <div class="keep">
-  <h2>Wartości pól wyboru i przykład</h2>
+  <h2>Wartości pól wyboru</h2>
   <p>Pola wyboru przyjmują tylko poniższe identyfikatory. Inna wartość kończy się błędem <code>400</code> z komunikatem dla tego pola.</p>
   <h4><code>destination</code> - akwen</h4>
   </div>
@@ -247,11 +267,10 @@ http://localhost:4520   (lokalnie, npm run dev)</pre>
   <h4><code>nights</code> - długość rejsu</h4>
   <table>
     <thead><tr><th>Wartość</th><th>Znaczenie</th></tr></thead>
-    <tr><td><code>3</code>, <code>5</code>, <code>7</code>, <code>10</code>, <code>14</code></td><td>Liczba nocy. Formularz domyślnie zaznacza <code>7</code>.</td></tr>
-    <tr><td><code>inna</code></td><td>Inna długość, do ustalenia w rozmowie</td></tr>
+    <tr><td><code>3</code>, <code>5</code>, <code>7</code>, <code>10</code>, <code>14</code>, <code>inna</code></td><td>Liczba nocy (formularz domyślnie zaznacza <code>7</code>) albo inna długość do ustalenia w rozmowie.</td></tr>
   </table>
   </div>
-  <div class="keep break">
+  <div class="keep">
   <h4><code>cruiseType</code> - rodzaj rejsu</h4>
   <table>
     <thead><tr><th>Wartość</th><th>Znaczenie</th></tr></thead>
@@ -272,24 +291,7 @@ http://localhost:4520   (lokalnie, npm run dev)</pre>
     <tr><td><code>posciel</code></td><td>Pościel, ręczniki i sprzątanie po rejsie</td></tr>
   </table>
   </div>
-  <div class="keep">
-  <h4>Przykład żądania</h4>
-  <p>Treść żądania <code>POST</code> z nagłówkiem <code>Content-Type: application/json</code>, ze wszystkimi polami:</p>
-<pre>{
-  "destination": "chorwacja",
-  "startDate": "2027-06-12",
-  "nights": "7",
-  "guests": 6,
-  "cruiseType": "ze-skipperem",
-  "extras": ["sup", "transfer"],
-  "name": "Anna Kowalska",
-  "email": "anna@example.com",
-  "phone": "+48 600 000 000",
-  "message": "Pierwszy rejs, dwoje dzieci.",
-  "consent": true,
-  "website": ""
-}</pre>
-  </div>
+
 </section>
 
 <section id="responses">
@@ -319,12 +321,14 @@ http://localhost:4520   (lokalnie, npm run dev)</pre>
 <pre>{"ok": false}</pre>
   <h4>Odpowiedź - sukces (200)</h4>
 <pre>{"ok": true}</pre>
-  <h4 class="break">Znaczenie kluczy w odpowiedzi</h4>
+  <div class="keep">
+  <h4>Znaczenie kluczy w odpowiedzi</h4>
   <table>
     <thead><tr><th>Klucz</th><th>Opis</th></tr></thead>
     <tr><td><code>ok</code></td><td><code>true</code>, gdy zapytanie zostało przyjęte. <code>false</code> przy każdym błędzie.</td></tr>
-    <tr><td><code>errors</code></td><td>Tylko przy błędzie walidacji. Obiekt: nazwa pola → komunikat po polsku z informacją, co poprawić. Pola, których serwer nie obsługuje, dostają komunikat „To pole nie jest obsługiwane.”.</td></tr>
+    <tr><td><code>errors</code></td><td>Tylko przy błędzie walidacji. Obiekt: nazwa pola → komunikat w języku z pola <code>lang</code> z informacją, co poprawić. Pola, których serwer nie obsługuje, dostają komunikat „To pole nie jest obsługiwane.”.</td></tr>
   </table>
+  </div>
   <p class="note">
     Sukces nie zwraca identyfikatora zapytania, bo serwer niczego nie zapisuje w bazie. Zapytanie istnieje tylko
     jako e-mail u brokera.
@@ -383,7 +387,8 @@ Imię i nazwisko: Anna Kowalska
 E-mail: anna@example.com
 Telefon: +48 600 000 000
 
-Wiadomość: Pierwszy rejs, dwoje dzieci.</pre>
+Wiadomość: Pierwszy rejs, dwoje dzieci.
+Język strony klienta: polski</pre>
   <h4>Zachowanie zależnie od konfiguracji</h4>
   <table>
     <thead><tr><th>Konfiguracja</th><th>Zachowanie</th></tr></thead>
@@ -409,6 +414,7 @@ Wiadomość: Pierwszy rejs, dwoje dzieci.</pre>
     <thead><tr><th>Parametr</th><th>Wymagany</th><th>Opis</th></tr></thead>
     <tr><td><code>question</code></td><td>tak</td><td>Pytanie, od 3 do 300 znaków. Serwer zamienia ciągi spacji i nowe linie na jedną spację i obcina spacje na brzegach.</td></tr>
     <tr><td><code>website</code></td><td>nie</td><td>Pułapka na boty, zawsze puste. Wypełnione daje odpowiedź <code>unknown</code> bez przetwarzania pytania.</td></tr>
+    <tr><td><code>lang</code></td><td>nie</td><td>Język strony: <code>pl</code> (domyślnie) albo <code>en</code>. Asystent szuka w bazie tego języka i w nim odpowiada, także komunikatami filtra i błędów.</td></tr>
   </table>
   <h4>Przykład żądania (curl)</h4>
 <pre>curl -X POST https://kilwater.com/api/asystent \
@@ -491,7 +497,7 @@ Wiadomość: Pierwszy rejs, dwoje dzieci.</pre>
   <table>
     <thead><tr><th>Element</th><th>Opis</th></tr></thead>
     <tr><td>Model</td><td><code>Xenova/bge-m3</code> (licencja MIT, ok. 560 MB) przez <code>@huggingface/transformers</code> i ONNX Runtime. Działa na procesorze, bez karty graficznej.</td></tr>
-    <tr><td>Baza wiedzy</td><td><code>src/data/assistant-answers.ts</code>: 40 odpowiedzi i 233 sformułowania pytań. FAQ ze strony z typowymi sformułowaniami (<code>alsoAsked</code> w <code>faq.ts</code>) oraz odpowiedzi składane z danych strony: akweny, sezon, trasy, rodzaje rejsów, załoga, dodatki, kontakt.</td></tr>
+    <tr><td>Baza wiedzy</td><td><code>src/data/assistant-answers.ts</code>: osobna baza dla każdego języka, po polsku 45 odpowiedzi i 253 sformułowania pytań, po angielsku 40 i 233. FAQ ze strony z typowymi sformułowaniami (<code>alsoAsked</code> w <code>faq.ts</code>), odpowiedzi składane z danych strony (akweny, sezon, trasy, rodzaje rejsów, załoga, dodatki, kontakt) i odesłania do artykułów poradnika (tylko po polsku).</td></tr>
     <tr><td>Pewna odpowiedź</td><td>Podobieństwo co najmniej 0,80 albo co najmniej 0,70 z przewagą 0,04 nad drugą odpowiedzią.</td></tr>
     <tr><td>Brak pewności</td><td>Inaczej, ale są pytania z podobieństwem od 0,64. Pokazuje do trzech takich pytań.</td></tr>
     <tr><td>Brak odpowiedzi</td><td>Wszystkie podobieństwa poniżej 0,64. W pomiarze pytania spoza tematu dostawały najwyżej 0,62.</td></tr>
@@ -507,7 +513,7 @@ HOST=0.0.0.0 PORT=8080 node ./dist/server/entry.mjs   # start z katalogu projekt
   <ol>
     <li>Gdy pytanie pasuje do istniejącej odpowiedzi, dopisz nowe sformułowanie do <code>alsoAsked</code> w <code>faq.ts</code> albo do <code>questions</code> w <code>assistant-answers.ts</code>.</li>
     <li>Gdy to nowy temat, dodaj wpis z <code>id</code>, kilkoma sformułowaniami, odpowiedzią opartą na danych firmy i opcjonalnym <code>link</code>. Nie wpisuj cen ani obietnic, których nie potwierdził właściciel.</li>
-    <li>Uruchom <code>npm run assistant:eval</code>. Zestaw 48 pytań kontrolnych sprawdza parafrazy, pytania bliskie tematu bez odpowiedzi, pytania spoza tematu i filtr danych kontaktowych.</li>
+    <li>Uruchom <code>npm run assistant:eval</code>. Zestaw 67 pytań kontrolnych po polsku i angielsku sprawdza parafrazy, pytania bliskie tematu bez odpowiedzi, pytania spoza tematu i filtr danych kontaktowych.</li>
   </ol>
 </section>
 

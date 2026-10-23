@@ -1,12 +1,18 @@
 ---
-import { processSteps as steps } from "../data/offer";
+import { processSteps } from "../data/offer";
+import { toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale).process;
+const steps = processSteps[locale];
 ---
 
 <section class="process" id="jak-to-dziala" aria-labelledby="process-title" data-process>
   <div class="process__inner">
     <header class="process__head">
-      <p class="label">Jak to działa</p>
-      <h2 id="process-title" class="section-title">Od pierwszej wiadomości<br />do odbioru jachtu</h2>
+      <p class="label">{t.label}</p>
+      <h2 id="process-title" class="section-title">{t.titleLines[0]}<br />{t.titleLines[1]}</h2>
     </header>
 
     <div class="process__timeline">
@@ -28,7 +34,7 @@ import { processSteps as steps } from "../data/offer";
     </div>
 
     <a class="button button--solid" href="#zapytanie">
-      Zacznij od formularza
+      {t.cta}
       <span class="button__arrow" aria-hidden="true">→</span>
     </a>
   </div>

@@ -3,21 +3,20 @@ import Logo from "./Logo.astro";
 import { company } from "../data/company";
 import { logoMark } from "../data/logo-mark";
 import { destinationTexts } from "../data/offer";
+import { hasPage, pagePath, sectionHref, toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
 
 const sections = [
-  { href: "/#akweny", label: "Akweny" },
-  { href: "/#rejsy", label: "Rodzaje rejsów" },
-  { href: "/#zaloga", label: "Załoga i dodatki" },
-  { href: "/#trasy", label: "Przykładowe trasy" },
-  { href: "/#kiedy-plynac", label: "Kiedy płynąć" },
-  { href: "/#jak-to-dziala", label: "Jak to działa" },
-  { href: "/#faq", label: "Pytania i odpowiedzi" },
-  { href: "/#zapytanie", label: "Zaplanuj rejs" },
+  ...t.footer.sections.map((section) => ({ href: sectionHref(locale, section.id), label: section.label })),
+  ...(hasPage("guide", locale) ? [{ href: pagePath("guide", locale), label: t.nav.guide }] : []),
 ];
 
 const documents = [
-  { href: "/polityka-prywatnosci", label: "Polityka prywatności" },
-  { href: "/regulamin", label: "Regulamin" },
+  { href: pagePath("privacy", locale), label: t.footer.privacy },
+  { href: pagePath("terms", locale), label: t.footer.terms },
 ];
 
 const wordmarkLetters = [..."KILWATER"];
@@ -28,23 +27,23 @@ const year = new Date().getFullYear();
   <div class="footer__inner">
     <div class="footer__brand">
       <Logo />
-      <h2 class="footer__pitch">Twój tydzień na wodzie zaczyna się od <span class="footer__accent">jednej wiadomości</span>.</h2>
+      <h2 class="footer__pitch">{t.footer.pitchBefore} <span class="footer__accent">{t.footer.pitchAccent}</span>.</h2>
       <p class="footer__tagline">
-        Napisz, gdzie i kiedy chcesz płynąć. Broker odpowie z propozycją jachtów, trasy i ceny, a zapytanie nic nie kosztuje.
+        {t.footer.tagline}
       </p>
       <div class="footer__actions">
-        <a class="button button--solid footer__cta" href="/#zapytanie">
-          Zaplanuj swój rejs
+        <a class="button button--solid footer__cta" href={sectionHref(locale, "zapytanie")}>
+          {t.footer.cta}
           <span class="button__arrow" aria-hidden="true">→</span>
         </a>
-        <a class="footer__link footer__mail" href={`mailto:${company.email}`}>albo napisz na {company.email}</a>
+        <a class="footer__link footer__mail" href={`mailto:${company.email}`}>{t.footer.mailPrefix} {company.email}</a>
       </div>
       <div class="footer__start">
-        <p class="footer__start-label" id="footer-start-label">Zacznij od akwenu:</p>
+        <p class="footer__start-label" id="footer-start-label">{t.footer.startLabel}</p>
         <ul class="footer__destinations" aria-labelledby="footer-start-label">
-          {destinationTexts.map((destination) => (
+          {destinationTexts[locale].map((destination) => (
             <li>
-              <a class="footer__destination" href={`/?akwen=${destination.slug}#zapytanie`}>
+              <a class="footer__destination" href={sectionHref(locale, "zapytanie", { akwen: destination.slug })}>
                 {destination.name}
                 <span class="footer__destination-arrow" aria-hidden="true">↗</span>
               </a>
@@ -54,15 +53,15 @@ const year = new Date().getFullYear();
       </div>
     </div>
 
-    <nav class="footer__column" aria-label="Sekcje strony">
-      <p class="footer__heading">Strona</p>
+    <nav class="footer__column" aria-label={t.footer.sectionsAria}>
+      <p class="footer__heading">{t.footer.sectionsHeading}</p>
       <ul>
         {sections.map((link) => <li><a class="footer__link" href={link.href}>{link.label}</a></li>)}
       </ul>
     </nav>
 
     <div class="footer__column">
-      <p class="footer__heading">Kontakt</p>
+      <p class="footer__heading">{t.footer.contactHeading}</p>
       <ul>
         <li><a class="footer__link" href={`mailto:${company.email}`}>{company.email}</a></li>
         <li><a class="footer__link" href={company.phoneHref}>{company.phone}</a></li>
@@ -72,8 +71,8 @@ const year = new Date().getFullYear();
       </ul>
     </div>
 
-    <nav class="footer__column" aria-label="Dokumenty">
-      <p class="footer__heading">Dokumenty</p>
+    <nav class="footer__column" aria-label={t.footer.documentsAria}>
+      <p class="footer__heading">{t.footer.documentsHeading}</p>
       <ul>
         {documents.map((link) => <li><a class="footer__link" href={link.href}>{link.label}</a></li>)}
       </ul>
@@ -100,7 +99,7 @@ const year = new Date().getFullYear();
   <div class="footer__bottom">
     <p>© {year} {company.name}</p>
     <button class="footer__top" type="button" data-scroll-top>
-      Wróć na górę
+      {t.footer.backToTop}
       <span class="footer__top-arrow" aria-hidden="true">↑</span>
     </button>
   </div>

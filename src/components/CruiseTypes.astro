@@ -4,33 +4,30 @@ import crewImage from "../assets/photos/zaloga.jpg";
 import skipperImage from "../assets/photos/skipper.webp";
 import friendsImage from "../assets/photos/przyjaciele.webp";
 import { cruiseTypeTexts } from "../data/offer";
+import { toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale).cruises;
 
 const cruiseTypeMedia = [
-  {
-    image: crewImage,
-    alt: "Członek załogi w lnianym mundurze podaje śniadanie z figami, brzoskwiniami i rogalikami na tekowym stole jachtu",
-    focus: "45% 60%",
-  },
-  {
-    image: skipperImage,
-    alt: "Opalone dłonie skippera na drewnianym kole sterowym jachtu, obok mosiężny kompas, w tle rozmyte morze",
-    focus: "50% 55%",
-  },
-  {
-    image: friendsImage,
-    alt: "Czworo przyjaciół siedzi na dziobie jachtu pod białymi żaglami i patrzy na skaliste wyspy w zachodzącym słońcu",
-    focus: "45% 50%",
-  },
+  { image: crewImage, focus: "45% 60%" },
+  { image: skipperImage, focus: "50% 55%" },
+  { image: friendsImage, focus: "45% 50%" },
 ];
 
-const cruiseTypes = cruiseTypeTexts.map((cruiseType, index) => ({ ...cruiseType, ...cruiseTypeMedia[index] }));
+const cruiseTypes = cruiseTypeTexts[locale].map((cruiseType, index) => ({
+  ...cruiseType,
+  ...cruiseTypeMedia[index],
+  alt: t.imageAlts[index],
+}));
 ---
 
 <section class="cruises" id="rejsy" aria-labelledby="cruises-title" data-cruises>
   <div class="cruises__inner">
     <header class="cruises__head">
-      <p class="label">Rodzaje rejsów</p>
-      <h2 id="cruises-title" class="section-title">Ile chcesz robić sam,<br />a ile zostawić nam</h2>
+      <p class="label">{t.label}</p>
+      <h2 id="cruises-title" class="section-title">{t.titleLines[0]}<br />{t.titleLines[1]}</h2>
     </header>
 
     <div class="cruises__stage">
@@ -73,7 +70,7 @@ const cruiseTypes = cruiseTypeTexts.map((cruiseType, index) => ({ ...cruiseType,
             <h3 class="cruise__name">{cruise.name}</h3>
             <p class="cruise__text">{cruise.text}</p>
             <p class="cruise__audience">{cruise.audience}</p>
-            <ul class="cruise__included" aria-label={`Co obejmuje rejs: ${cruise.name}`}>
+            <ul class="cruise__included" aria-label={t.includedAria(cruise.name)}>
               {cruise.included.map((item) => <li>{item}</li>)}
             </ul>
             <span class="wake-point wake-point--mobile cruise__wake cruise__wake-end" data-wake-point aria-hidden="true"></span>

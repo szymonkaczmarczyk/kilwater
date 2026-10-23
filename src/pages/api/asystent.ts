@@ -5,24 +5,30 @@ import { questionLimits } from "../../lib/assistant-limits";
 import { readEnv } from "../../lib/env";
 import { createRateLimiter } from "../../lib/rate-limit";
 import { assistantFallback } from "../../data/assistant-answers";
+import { locales, toLocale, type Locale } from "../../i18n/locales";
+import { useTranslations } from "../../i18n/ui";
 
 export const prerender = false;
 
 const maxBodyBytes = 2_000;
 const isRateLimited = createRateLimiter(Number(readEnv("ASSISTANT_RATE_LIMIT") ?? 20), 10 * 60 * 1000);
 
-const questionSchema = z.strictObject({
-  question: z
-    .string({ error: "Wpisz pytanie." })
-    .transform(normalizeQuestion)
-    .pipe(
-      z
-        .string()
-        .min(questionLimits.min, { error: `Wpisz pytanie, co najmniej ${questionLimits.min} znaki.` })
-        .max(questionLimits.max, { error: `Pytanie może mieć maksymalnie ${questionLimits.max} znaków.` }),
-    ),
-  website: z.string().optional(),
-});
+const createQuestionSchema = (locale: Locale) => {
+  const t = useTranslations(locale).assistant;
+  return z.strictObject({
+    question: z
+      .string({ error: t.missing })
+      .transform(normalizeQuestion)
+      .pipe(
+        z
+          .string()
+          .min(questionLimits.min, { error: t.minLength(questionLimits.min) })
+          .max(questionLimits.max, { error: t.maxLength(questionLimits.max) }),
+      ),
+    website: z.string().optional(),
+    lang: z.enum(locales).default("pl"),
+  });
+};
 
 const json = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), {
@@ -50,21 +56,23 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return json(400, { ok: false });
   }
 
-  const parsed = questionSchema.safeParse(payload);
+  const locale = toLocale(typeof payload === "object" && payload && "lang" in payload ? String(payload.lang) : undefined);
+  const parsed = createQuestionSchema(locale).safeParse(payload);
   if (!parsed.success) {
+    const t = useTranslations(locale).assistant;
     const issue = parsed.error.issues[0];
-    const message = issue?.code === "unrecognized_keys" ? "To pole nie jest obsługiwane." : issue?.message;
-    return json(400, { ok: false, error: message ?? "Wpisz pytanie." });
+    const message = issue?.code === "unrecognized_keys" ? t.unsupported : issue?.message;
+    return json(400, { ok: false, error: message ?? t.missing });
   }
 
-  const { question, website } = parsed.data;
-  if (website) return json(200, { ok: true, kind: "unknown", text: assistantFallback.unknown, related: [] });
+  const { question, website, lang } = parsed.data;
+  if (website) return json(200, { ok: true, kind: "unknown", text: assistantFallback[lang].unknown, related: [] });
 
-  const screened = screenQuestion(question);
+  const screened = screenQuestion(question, lang);
   if (screened) return json(200, { ok: true, ...screened });
 
   try {
-    const reply = await answerQuestion(question);
+    const reply = await answerQuestion(question, lang);
     console.info(`[asystent] ${reply.kind}`);
     return json(200, { ok: true, ...reply });
   } catch {

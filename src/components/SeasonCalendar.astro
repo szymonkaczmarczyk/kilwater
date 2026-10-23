@@ -1,6 +1,11 @@
 ---
 import { seasonLevels, seasonMonths, seasons, type SeasonLevel } from "../data/seasons";
+import { sectionHref, toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
 
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale).season;
+const levels = seasonLevels[locale];
 const levelOrder: SeasonLevel[] = ["best", "peak", "good", "cool"];
 const initial = { destination: 0, month: 2 };
 const initialSeason = seasons[initial.destination];
@@ -11,36 +16,36 @@ const initialLevel = initialSeason.levels[initial.month] as SeasonLevel;
 <section class="season" id="kiedy-plynac" aria-labelledby="season-title" data-season>
   <div class="season__inner">
     <header class="season__head">
-      <p class="label">Kiedy płynąć</p>
-      <h2 id="season-title" class="section-title">Kalendarz sezonu<br />na każdym akwenie</h2>
+      <p class="label">{t.label}</p>
+      <h2 id="season-title" class="section-title">{t.titleLines[0]}<br />{t.titleLines[1]}</h2>
       <p class="section-lead">
-        Wybierz akwen i miesiąc, żeby zobaczyć, czego się spodziewać na wodzie. To nasza podpowiedź na podstawie typowej pogody, a nie prognoza.
+        {t.lead}
       </p>
     </header>
 
     <div class="season__layout">
       <div class="season__matrix">
         <table class="season__table">
-          <caption class="season__caption">Kalendarz sezonu: akweny i miesiące od kwietnia do października</caption>
+          <caption class="season__caption">{t.caption}</caption>
           <thead>
             <tr>
-              <th scope="col" class="season__corner">Akwen</th>
+              <th scope="col" class="season__corner">{t.corner}</th>
               {seasonMonths.map((month) => (
-                <th scope="col" class="season__month"><abbr title={month.name}>{month.short}</abbr></th>
+                <th scope="col" class="season__month"><abbr title={month.name[locale]}>{month.short}</abbr></th>
               ))}
             </tr>
           </thead>
           <tbody>
             {seasons.map((season, destinationIndex) => (
               <tr>
-                <th scope="row" class="season__place">{season.name}</th>
+                <th scope="row" class="season__place">{season.name[locale]}</th>
                 {season.levels.map((level, monthIndex) => (
                   <td>
                     <button
                       class:list={["season__cell", `season__cell--${level}`]}
                       type="button"
                       aria-pressed={destinationIndex === initial.destination && monthIndex === initial.month ? "true" : "false"}
-                      aria-label={`${season.name}, ${seasonMonths[monthIndex].name}: ${seasonLevels[level as SeasonLevel].label}`}
+                      aria-label={t.cellAria(season.name[locale], seasonMonths[monthIndex].name[locale], levels[level].label)}
                       data-season-cell
                       data-destination={destinationIndex}
                       data-month={monthIndex}
@@ -51,33 +56,33 @@ const initialLevel = initialSeason.levels[initial.month] as SeasonLevel;
             ))}
           </tbody>
         </table>
-        <ul class="season__legend" aria-label="Legenda">
+        <ul class="season__legend" aria-label={t.legend}>
           {levelOrder.map((level) => (
-            <li><span class:list={["season__swatch", `season__cell--${level}`]} aria-hidden="true"></span>{seasonLevels[level].label}</li>
+            <li><span class:list={["season__swatch", `season__cell--${level}`]} aria-hidden="true"></span>{levels[level].label}</li>
           ))}
         </ul>
       </div>
 
       <div class="season__detail" aria-live="polite" data-season-detail>
-        <p class="season__detail-label" data-season-label>{seasonLevels[initialLevel].label}</p>
-        <h3 class="season__detail-title" data-season-title>{initialSeason.name} {initialMonth.inName}</h3>
-        <p class="season__detail-text" data-season-text>{seasonLevels[initialLevel].text}</p>
+        <p class="season__detail-label" data-season-label>{levels[initialLevel].label}</p>
+        <h3 class="season__detail-title" data-season-title>{initialSeason.name[locale]} {initialMonth.inName[locale]}</h3>
+        <p class="season__detail-text" data-season-text>{levels[initialLevel].text}</p>
         <dl class="season__facts">
           <div>
-            <dt>Wiatr</dt>
-            <dd data-season-wind>{initialSeason.wind}</dd>
+            <dt>{t.wind}</dt>
+            <dd data-season-wind>{initialSeason.wind[locale]}</dd>
           </div>
           <div>
-            <dt>Woda</dt>
-            <dd data-season-water>{initialSeason.water}</dd>
+            <dt>{t.water}</dt>
+            <dd data-season-water>{initialSeason.water[locale]}</dd>
           </div>
         </dl>
         <a
           class="button button--solid season__cta"
-          href={`/?akwen=${initialSeason.destination}&miesiac=${initialMonth.number}#zapytanie`}
+          href={sectionHref(locale, "zapytanie", { akwen: initialSeason.destination, miesiac: String(initialMonth.number) })}
           data-season-cta
         >
-          <span data-season-cta-label>Zapytaj o {initialMonth.name}</span>
+          <span data-season-cta-label>{t.cta(initialMonth.name[locale])}</span>
           <span class="button__arrow" aria-hidden="true">→</span>
         </a>
       </div>
@@ -86,8 +91,12 @@ const initialLevel = initialSeason.levels[initial.month] as SeasonLevel;
 </section>
 
 <script>
-  import { seasonLevels, seasonMonths, seasons, type SeasonLevel } from "../data/seasons";
+  import { seasonLevels, seasonMonths, seasons } from "../data/seasons";
+  import { sectionHref, toLocale } from "../i18n/locales";
+  import { useTranslations } from "../i18n/ui";
 
+  const locale = toLocale(document.documentElement.lang);
+  const t = useTranslations(locale).season;
   const section = document.querySelector<HTMLElement>("[data-season]");
   const cells = section ? [...section.querySelectorAll<HTMLButtonElement>("[data-season-cell]")] : [];
   const field = (name: string) => section?.querySelector<HTMLElement>(`[data-season-${name}]`);
@@ -97,15 +106,15 @@ const initialLevel = initialSeason.levels[initial.month] as SeasonLevel;
   const showDetail = (cell: HTMLButtonElement) => {
     const season = seasons[Number(cell.dataset.destination)];
     const month = seasonMonths[Number(cell.dataset.month)];
-    const level = seasonLevels[season.levels[Number(cell.dataset.month)] as SeasonLevel];
+    const level = seasonLevels[locale][season.levels[Number(cell.dataset.month)]];
     cells.forEach((other) => other.setAttribute("aria-pressed", String(other === cell)));
     field("label")!.textContent = level.label;
-    field("title")!.textContent = `${season.name} ${month.inName}`;
+    field("title")!.textContent = `${season.name[locale]} ${month.inName[locale]}`;
     field("text")!.textContent = level.text;
-    field("wind")!.textContent = season.wind;
-    field("water")!.textContent = season.water;
-    field("cta-label")!.textContent = `Zapytaj o ${month.name}`;
-    if (cta) cta.href = `/?akwen=${season.destination}&miesiac=${month.number}#zapytanie`;
+    field("wind")!.textContent = season.wind[locale];
+    field("water")!.textContent = season.water[locale];
+    field("cta-label")!.textContent = t.cta(month.name[locale]);
+    if (cta) cta.href = sectionHref(locale, "zapytanie", { akwen: season.destination, miesiac: String(month.number) });
     detail?.classList.remove("is-changing");
     void detail?.offsetWidth;
     detail?.classList.add("is-changing");

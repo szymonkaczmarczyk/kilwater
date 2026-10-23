@@ -21,12 +21,19 @@ export const startSmoothScroll = () => {
   return lenis;
 };
 
+const targetTop = (target: number | HTMLElement) => {
+  if (typeof target === "number") return target;
+  const scrollMargin = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+  return target.getBoundingClientRect().top + window.scrollY - scrollMargin;
+};
+
 export const scrollToTarget = (target: number | HTMLElement, immediate = false) => {
+  const top = targetTop(target);
   if (lenis) {
-    lenis.scrollTo(target, { immediate, force: true });
+    lenis.resize();
+    lenis.scrollTo(top, { immediate, force: true });
     return;
   }
-  const top = typeof target === "number" ? target : target.getBoundingClientRect().top + window.scrollY;
   window.scrollTo({ top, behavior: immediate || prefersReducedMotion() ? "auto" : "smooth" });
 };
 

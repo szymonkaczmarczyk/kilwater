@@ -9,20 +9,24 @@ import {
   messageMaxLength,
   nightOptions,
 } from "../data/inquiry-options";
+import { pagePath, toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale).inquiry;
 ---
 
 <section class="inquiry" id="zapytanie" aria-labelledby="inquiry-title">
   <div class="inquiry__inner">
     <header class="inquiry__intro">
-      <p class="label">Zapytanie</p>
-      <h2 id="inquiry-title" class="section-title">Zaplanuj rejs</h2>
+      <p class="label">{t.label}</p>
+      <h2 id="inquiry-title" class="section-title">{t.title}</h2>
       <p class="inquiry__lead">
-        Opisz rejs w kilku polach. Broker przygotuje propozycję jachtów, trasy i załogi, a potem dopasuje ją do Twoich uwag.
+        {t.lead}
       </p>
       <ul class="inquiry__notes">
-        <li>Zapytanie nic nie kosztuje i do niczego nie zobowiązuje.</li>
-        <li>Wystarczy przybliżony termin, szczegóły ustalimy w rozmowie.</li>
-        <li>Wolisz napisać? <a class="inquiry__mail" href={`mailto:${company.email}`}>{company.email}</a></li>
+        {t.notes.map((note) => <li>{note}</li>)}
+        <li>{t.preferWrite} <a class="inquiry__mail" href={`mailto:${company.email}`}>{company.email}</a></li>
       </ul>
     </header>
 
@@ -37,36 +41,36 @@ import {
         </div>
 
         <fieldset class="form__group">
-          <legend class="form__legend"><span>01</span> Twój rejs</legend>
+          <legend class="form__legend"><span>01</span> {t.legendCruise}</legend>
 
           <div class="form__grid">
             <div class="field">
-              <label class="field__label" for="destination">Akwen</label>
+              <label class="field__label" for="destination">{t.destination}</label>
               <select class="field__control" id="destination" name="destination" required aria-describedby="destination-error">
-                <option value="" selected disabled>Wybierz akwen</option>
-                {destinationOptions.map((option) => <option value={option.value}>{option.label}</option>)}
+                <option value="" selected disabled>{t.destinationPlaceholder}</option>
+                {destinationOptions.map((option) => <option value={option.value}>{option.label[locale]}</option>)}
               </select>
               <p class="field__error" id="destination-error" data-error-for="destination"></p>
             </div>
 
             <div class="field">
-              <label class="field__label" for="startDate">Data wypłynięcia</label>
+              <label class="field__label" for="startDate">{t.startDate}</label>
               <input class="field__control" type="date" id="startDate" name="startDate" required aria-describedby="startDate-error" data-min-today />
               <p class="field__error" id="startDate-error" data-error-for="startDate"></p>
             </div>
 
             <div class="field">
-              <label class="field__label" for="nights">Długość rejsu</label>
+              <label class="field__label" for="nights">{t.nights}</label>
               <select class="field__control" id="nights" name="nights" required aria-describedby="nights-error">
-                {nightOptions.map((option) => <option value={option.value} selected={option.value === "7"}>{option.label}</option>)}
+                {nightOptions.map((option) => <option value={option.value} selected={option.value === "7"}>{option.label[locale]}</option>)}
               </select>
               <p class="field__error" id="nights-error" data-error-for="nights"></p>
             </div>
 
             <div class="field">
-              <label class="field__label" for="guests">Liczba osób</label>
+              <label class="field__label" for="guests">{t.guests}</label>
               <div class="stepper">
-                <button class="stepper__button" type="button" aria-label="Mniej osób" data-step="-1">−</button>
+                <button class="stepper__button" type="button" aria-label={t.fewer} data-step="-1">−</button>
                 <input
                   class="field__control stepper__input"
                   type="number"
@@ -79,21 +83,21 @@ import {
                   required
                   aria-describedby="guests-error"
                 />
-                <button class="stepper__button" type="button" aria-label="Więcej osób" data-step="1">+</button>
+                <button class="stepper__button" type="button" aria-label={t.more} data-step="1">+</button>
               </div>
               <p class="field__error" id="guests-error" data-error-for="guests"></p>
             </div>
           </div>
 
           <div class="field">
-            <p class="field__label" id="cruiseType-label">Rodzaj rejsu</p>
+            <p class="field__label" id="cruiseType-label">{t.cruiseType}</p>
             <div class="choice-grid" role="radiogroup" aria-labelledby="cruiseType-label" aria-describedby="cruiseType-error">
               {cruiseOptions.map((option) => (
                 <label class="choice">
                   <input class="choice__input" type="radio" name="cruiseType" value={option.value} required />
                   <LineIcon name={option.icon} class="choice__icon" />
-                  <span class="choice__label">{option.label}</span>
-                  <span class="choice__hint">{option.hint}</span>
+                  <span class="choice__label">{option.label[locale]}</span>
+                  <span class="choice__hint">{option.hint[locale]}</span>
                 </label>
               ))}
             </div>
@@ -101,7 +105,7 @@ import {
           </div>
 
           <div class="field">
-            <p class="field__label" id="extras-label">Dodatki <span class="field__optional">opcjonalnie</span></p>
+            <p class="field__label" id="extras-label">{t.extras} <span class="field__optional">{t.optional}</span></p>
             <div class="chip-list" role="group" aria-labelledby="extras-label">
               {extraOptions.map((option) => (
                 <label class="chip">
@@ -111,7 +115,7 @@ import {
                       <path d="M2.5 6.5L5 9L9.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </span>
-                  {option.label}
+                  {option.label[locale]}
                 </label>
               ))}
             </div>
@@ -119,36 +123,36 @@ import {
         </fieldset>
 
         <fieldset class="form__group">
-          <legend class="form__legend"><span>02</span> Kontakt</legend>
+          <legend class="form__legend"><span>02</span> {t.legendContact}</legend>
 
           <div class="form__grid">
             <div class="field">
-              <label class="field__label" for="name">Imię i nazwisko</label>
+              <label class="field__label" for="name">{t.name}</label>
               <input class="field__control" type="text" id="name" name="name" autocomplete="name" required maxlength="120" aria-describedby="name-error" />
               <p class="field__error" id="name-error" data-error-for="name"></p>
             </div>
 
             <div class="field">
-              <label class="field__label" for="email">E-mail</label>
+              <label class="field__label" for="email">{t.email}</label>
               <input class="field__control" type="email" id="email" name="email" autocomplete="email" inputmode="email" spellcheck="false" autocapitalize="off" required maxlength="200" aria-describedby="email-error" />
               <p class="field__error" id="email-error" data-error-for="email"></p>
             </div>
 
             <div class="field field--wide">
-              <label class="field__label" for="phone">Telefon <span class="field__optional">opcjonalnie</span></label>
-              <input class="field__control" type="tel" id="phone" name="phone" autocomplete="tel" inputmode="tel" maxlength="30" placeholder="+48 600 000 000" aria-describedby="phone-error" />
+              <label class="field__label" for="phone">{t.phone} <span class="field__optional">{t.optional}</span></label>
+              <input class="field__control" type="tel" id="phone" name="phone" autocomplete="tel" inputmode="tel" maxlength="30" placeholder={t.phonePlaceholder} aria-describedby="phone-error" />
               <p class="field__error" id="phone-error" data-error-for="phone"></p>
             </div>
 
             <div class="field field--wide">
-              <label class="field__label" for="message">Wiadomość <span class="field__optional">opcjonalnie</span></label>
+              <label class="field__label" for="message">{t.message} <span class="field__optional">{t.optional}</span></label>
               <textarea
                 class="field__control field__control--area"
                 id="message"
                 name="message"
                 rows="4"
                 maxlength={messageMaxLength}
-                placeholder="Np. rocznica ślubu, dzieci w wieku 6 i 9 lat, chcemy dużo kąpieli i mało przelotów."
+                placeholder={t.messagePlaceholder}
                 aria-describedby="message-error message-count"
               ></textarea>
               <p class="field__count" id="message-count" data-message-count>0 / {messageMaxLength}</p>
@@ -165,7 +169,7 @@ import {
                 </svg>
               </span>
               <span>
-                Akceptuję <a href="/regulamin">regulamin</a>. Moje dane posłużą do przygotowania oferty rejsu zgodnie z <a href="/polityka-prywatnosci">polityką prywatności</a>.
+                {t.consentBefore} <a href={pagePath("terms", locale)}>{t.consentTerms}</a>{t.consentMiddle} <a href={pagePath("privacy", locale)}>{t.consentPrivacy}</a>.
               </span>
             </label>
             <p class="field__error" id="consent-error" data-error-for="consent"></p>
@@ -173,16 +177,16 @@ import {
         </fieldset>
 
         <div class="form__trap" aria-hidden="true">
-          <label for="website">Nie wypełniaj tego pola</label>
+          <label for="website">{t.trapLabel}</label>
           <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
         </div>
 
         <div class="form__submit">
           <button class="button form__button" type="submit" data-form-submit>
-            <span data-submit-label>Wyślij zapytanie</span>
+            <span data-submit-label>{t.submit}</span>
             <span class="button__arrow" aria-hidden="true">→</span>
           </button>
-          <p class="form__shortcut"><kbd data-shortcut-key>Ctrl</kbd> + <kbd>Enter</kbd> wysyła formularz</p>
+          <p class="form__shortcut"><kbd data-shortcut-key>Ctrl</kbd> + <kbd>Enter</kbd> {t.shortcut}</p>
         </div>
       </form>
 
@@ -191,9 +195,9 @@ import {
           <circle cx="24" cy="24" r="22.5" stroke="currentColor" />
           <path d="M15 24.5L21.5 31L33.5 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
-        <h3 class="success__title">Zapytanie wysłane</h3>
-        <p class="success__text" data-success-text>Broker odezwie się na podany adres e-mail z propozycją rejsu.</p>
-        <button class="link-underline" type="button" data-form-again>Wyślij kolejne zapytanie</button>
+        <h3 class="success__title">{t.successTitle}</h3>
+        <p class="success__text" data-success-text>{t.successText}</p>
+        <button class="link-underline" type="button" data-form-again>{t.again}</button>
       </div>
     </div>
   </div>
@@ -204,6 +208,13 @@ import {
   import { navigationEvent } from "../scripts/motion";
   import { sampleRoutes } from "../data/routes";
   import { seasonMonths } from "../data/seasons";
+  import { inquiryMessages } from "../i18n/inquiry-messages";
+  import { toLocale } from "../i18n/locales";
+  import { useTranslations } from "../i18n/ui";
+
+  const locale = toLocale(document.documentElement.lang);
+  const t = useTranslations(locale);
+  const messages = inquiryMessages[locale];
 
   type FieldErrors = Record<string, string>;
 
@@ -235,25 +246,26 @@ import {
       message: String(data.get("message") ?? "").trim(),
       consent: data.get("consent") === "on",
       website: String(data.get("website") ?? ""),
+      lang: locale,
     };
   };
 
   const validate = (values: ReturnType<typeof readForm>): FieldErrors => {
     const errors: FieldErrors = {};
-    if (!values.destination) errors.destination = "Wybierz akwen albo „Jeszcze nie wiem”.";
-    if (!values.startDate) errors.startDate = "Podaj datę wypłynięcia.";
-    else if (values.startDate < todayIso()) errors.startDate = "Data wypłynięcia nie może być w przeszłości.";
+    if (!values.destination) errors.destination = messages.destination;
+    if (!values.startDate) errors.startDate = messages.startDateMissing;
+    else if (values.startDate < todayIso()) errors.startDate = messages.startDatePast;
     if (!Number.isInteger(values.guests) || values.guests < guestLimits.min || values.guests > guestLimits.max) {
-      errors.guests = `Podaj od ${guestLimits.min} do ${guestLimits.max} osób.`;
+      errors.guests = messages.guestsRange;
     }
-    if (!values.cruiseType) errors.cruiseType = "Wybierz rodzaj rejsu.";
-    if (values.name.length < 2) errors.name = "Podaj imię i nazwisko.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(values.email)) errors.email = "Podaj poprawny adres e-mail, np. jan@przyklad.pl.";
+    if (!values.cruiseType) errors.cruiseType = messages.cruiseType;
+    if (values.name.length < 2) errors.name = messages.nameMissing;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(values.email)) errors.email = messages.email;
     if (values.phone && !/^\+?[0-9 ()-]{7,}$/.test(values.phone)) {
-      errors.phone = "Podaj numer w formacie +48 600 000 000 albo zostaw puste.";
+      errors.phone = messages.phone;
     }
-    if (values.message.length > messageMaxLength) errors.message = `Wiadomość może mieć maksymalnie ${messageMaxLength} znaków.`;
-    if (!values.consent) errors.consent = "Zaznacz akceptację regulaminu, żebyśmy mogli przygotować ofertę.";
+    if (values.message.length > messageMaxLength) errors.message = messages.message;
+    if (!values.consent) errors.consent = messages.consent;
     return errors;
   };
 
@@ -282,7 +294,7 @@ import {
     if (!submitButton || !submitLabel) return;
     submitButton.disabled = isSending;
     submitButton.classList.toggle("is-sending", isSending);
-    submitLabel.textContent = isSending ? "Wysyłanie…" : "Wyślij zapytanie";
+    submitLabel.textContent = isSending ? t.inquiry.sending : t.inquiry.submit;
   };
 
   const submitInquiry = async (target: HTMLFormElement) => {
@@ -306,7 +318,7 @@ import {
         if (success) {
           success.hidden = false;
           const text = success.querySelector<HTMLElement>("[data-success-text]");
-          if (text) text.textContent = `Dziękujemy, ${values.name.split(" ")[0]}. Broker odezwie się na adres ${values.email} z propozycją rejsu.`;
+          if (text) text.textContent = t.inquiry.successPersonal(values.name.split(" ")[0], values.email);
           success.focus();
         }
         return;
@@ -317,11 +329,11 @@ import {
       }
       showAlert(
         response.status === 429
-          ? "Wysłano zbyt wiele zapytań w krótkim czasie. Odczekaj kilka minut i spróbuj ponownie."
-          : "Nie udało się wysłać zapytania. Spróbuj ponownie za chwilę albo napisz do nas e-mailem.",
+          ? t.inquiry.alerts.rateLimited
+          : t.inquiry.alerts.failed,
       );
     } catch {
-      showAlert("Brak połączenia z internetem. Sprawdź połączenie i wyślij zapytanie jeszcze raz.");
+      showAlert(t.inquiry.alerts.offline);
     } finally {
       setSending(false);
     }
@@ -365,7 +377,7 @@ import {
       const presetRoute = sampleRoutes.find((route) => route.slug === params.get("trasa"));
       if (presetMessageInput && canOverwrite(presetMessageInput, "message")) {
         presetMessageInput.value = presetRoute
-          ? `Interesuje mnie trasa „${presetRoute.title}” (${presetRoute.nights} nocy). Proszę o propozycję jachtu na ten plan.`
+          ? t.routes.inquiryMessage(presetRoute.title[locale], presetRoute.nights)
           : "";
         presetFilled.message = presetMessageInput.value;
         if (messageCount) messageCount.textContent = `${presetMessageInput.value.length} / ${messageMaxLength}`;

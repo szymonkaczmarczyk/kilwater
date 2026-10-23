@@ -1,0 +1,308 @@
+---
+import { Picture } from "astro:assets";
+import Base from "../../layouts/Base.astro";
+import { formatGuideDate, guideArticles, guidePath, readingMinutes } from "../../lib/guide";
+
+const articles = await guideArticles();
+const [featured, ...rest] = articles;
+const rows = [rest.slice(0, 2), rest.slice(2, 4)];
+
+const structuredData = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "Poradnik Kilwater",
+  description: "Praktyczne teksty przed pierwszym czarterem jachtu.",
+  url: new URL("/poradnik", Astro.site).href,
+  hasPart: articles.map((article) => ({
+    "@type": "Article",
+    headline: article.data.title,
+    url: new URL(guidePath(article), Astro.site).href,
+  })),
+});
+---
+
+<Base
+  title="Poradnik czarteru jachtów - Kilwater"
+  description="Pierwszy czarter krok po kroku, wybór akwenu i jachtu, rejs bez patentu i lista rzeczy do spakowania. Praktyczny poradnik przed rejsem."
+  page="guide"
+  solidNav
+>
+  <section class="guide" aria-labelledby="guide-title">
+    <header class="guide__head">
+      <p class="label">Poradnik</p>
+      <h1 id="guide-title" class="guide__title">Zanim wypłyniesz<br />pierwszy raz</h1>
+      <p class="section-lead">
+        Krótkie teksty o tym, jak wybrać akwen i jacht, co spakować i jak wygląda czarter od zapytania do zdania jachtu.
+      </p>
+    </header>
+
+    {featured && (
+      <article class="article-card article-card--featured" data-reveal>
+        <a class="article-card__link" href={guidePath(featured)}>
+          <figure class="frame article-card__frame">
+            <Picture
+              src={featured.data.cover}
+              alt={featured.data.coverAlt}
+              formats={["avif", "webp"]}
+              fallbackFormat="jpg"
+              widths={[640, 960, 1280]}
+              sizes="(min-width: 1024px) 58vw, 100vw"
+              loading="eager"
+            />
+          </figure>
+          <div class="article-card__copy">
+            <p class="article-card__topic">{featured.data.topic}</p>
+            <h2 class="article-card__title article-card__title--large">{featured.data.title}</h2>
+            <p class="article-card__text">{featured.data.description}</p>
+            <p class="article-card__meta">
+              {formatGuideDate(featured.data.published)} · {readingMinutes(featured.body ?? "")} min czytania
+            </p>
+            <span class="article-card__more">Czytaj poradnik <span aria-hidden="true">→</span></span>
+          </div>
+        </a>
+      </article>
+    )}
+
+    {rows.map((row, rowIndex) => (
+      <div class:list={["guide__row", { "guide__row--reverse": rowIndex % 2 === 1 }]}>
+        {row.map((article, index) => (
+          <article class:list={["article-card", index === 0 ? "article-card--wide" : "article-card--narrow"]} data-reveal>
+            <a class="article-card__link" href={guidePath(article)}>
+              <figure class:list={["frame", "article-card__frame", { "frame--arch": index !== 0 }]}>
+                <Picture
+                  src={article.data.cover}
+                  alt={article.data.coverAlt}
+                  formats={["avif", "webp"]}
+                  fallbackFormat="jpg"
+                  widths={[480, 800, 1120]}
+                  sizes="(min-width: 1024px) 40vw, 100vw"
+                  loading="lazy"
+                />
+              </figure>
+              <div class="article-card__copy">
+                <p class="article-card__topic">{article.data.topic}</p>
+                <h2 class="article-card__title">{article.data.title}</h2>
+                <p class="article-card__text">{article.data.description}</p>
+                <p class="article-card__meta">{readingMinutes(article.body ?? "")} min czytania</p>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    ))}
+
+    <aside class="guide__cta">
+      <div>
+        <p class="label">Nie ma tu Twojego pytania?</p>
+        <p class="guide__cta-title">Zapytaj asystenta albo od razu opisz swój rejs brokerowi.</p>
+      </div>
+      <div class="guide__cta-actions">
+        <a class="button button--solid guide__cta-button" href="/#zapytanie">
+          Zaplanuj rejs
+          <span class="button__arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="link-underline guide__cta-link" href="/#faq">Zapytaj asystenta</a>
+      </div>
+    </aside>
+  </section>
+  <script type="application/ld+json" set:html={structuredData} />
+</Base>
+
+<style>
+  .guide {
+    display: grid;
+    gap: var(--space-8);
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: calc(var(--nav-height) + var(--space-8)) var(--gutter) var(--space-10);
+  }
+
+  .guide__head {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-5);
+  }
+
+  .guide__head .label {
+    color: var(--text-muted);
+  }
+
+  .guide__title {
+    font-family: var(--font-display);
+    font-size: var(--size-h1);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.06em;
+  }
+
+  .guide__row {
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  .article-card__link {
+    display: grid;
+    gap: var(--space-5);
+    color: inherit;
+  }
+
+  .article-card__frame {
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+  }
+
+  .article-card__frame :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 900ms var(--ease-out);
+  }
+
+  .article-card--narrow .article-card__frame {
+    aspect-ratio: 3 / 4;
+  }
+
+  .article-card__copy {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+  }
+
+  .article-card__topic {
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .article-card__title {
+    max-width: 22ch;
+    font-family: var(--font-display);
+    font-size: var(--size-h4);
+    font-weight: var(--weight-regular);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.01em;
+  }
+
+  .article-card__title--large {
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    letter-spacing: -0.02em;
+  }
+
+  .article-card__text {
+    max-width: var(--measure);
+    color: var(--text-muted);
+  }
+
+  .article-card__meta {
+    font-size: var(--size-small);
+    color: var(--text-muted);
+  }
+
+  .article-card__more {
+    display: inline-flex;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    font-size: var(--size-small);
+    font-weight: var(--weight-medium);
+  }
+
+  .guide__cta {
+    display: grid;
+    gap: var(--space-5);
+    padding: var(--space-7) var(--space-6);
+    border-radius: var(--radius-md);
+    background: var(--surface-deep);
+    color: var(--text-on-deep);
+  }
+
+  .guide__cta .label {
+    color: var(--text-on-deep-muted);
+  }
+
+  .guide__cta-title {
+    max-width: 30ch;
+    margin-top: var(--space-3);
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.02em;
+  }
+
+  .guide__cta-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4) var(--space-6);
+  }
+
+  .guide__cta-button {
+    background: var(--text-on-deep);
+    border-color: var(--text-on-deep);
+    color: var(--text-strong);
+  }
+
+  .guide__cta-link {
+    color: var(--text-on-deep);
+  }
+
+  @media (hover: hover) {
+    .article-card__link:hover :global(img) {
+      transform: scale(1.04);
+    }
+
+    .article-card__link:hover .article-card__title {
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 4px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .guide__row {
+      grid-template-columns: 7fr 5fr;
+      align-items: start;
+    }
+
+    .guide__row--reverse {
+      grid-template-columns: 5fr 7fr;
+    }
+
+    .guide__row--reverse .article-card--wide {
+      order: 2;
+    }
+
+    .guide__cta {
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      padding: var(--space-8);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .guide {
+      gap: var(--space-9);
+    }
+
+    .article-card--featured .article-card__link {
+      grid-template-columns: 7fr 5fr;
+      align-items: center;
+      gap: var(--space-8);
+    }
+
+    .article-card--featured .article-card__frame {
+      aspect-ratio: 16 / 10;
+    }
+
+    .guide__row--reverse .article-card--narrow {
+      margin-top: var(--space-10);
+    }
+
+    .guide__row:not(.guide__row--reverse) .article-card--narrow {
+      margin-top: var(--space-10);
+    }
+  }
+</style>

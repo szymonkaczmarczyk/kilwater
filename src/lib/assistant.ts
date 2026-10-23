@@ -1,6 +1,7 @@
 import path from "node:path";
 import { env, pipeline, type FeatureExtractionPipeline } from "@huggingface/transformers";
 import { assistantEntries, assistantFallback, type AssistantLink } from "../data/assistant-answers";
+import { locales, type Locale } from "../i18n/locales";
 
 type AssistantKind = "answer" | "unsure" | "unknown" | "blocked";
 type AssistantReply = {
@@ -25,11 +26,11 @@ const linkPattern = /(https?:\/\/|www\.)\S+|\b[\p{L}\d-]+\.(com|pl|net|org|io|eu
 
 export const normalizeQuestion = (question: string) => question.replace(/\s+/g, " ").trim();
 
-export const screenQuestion = (question: string): AssistantReply | null => {
+export const screenQuestion = (question: string, locale: Locale): AssistantReply | null => {
   if (emailPattern.test(question) || phonePattern.test(question)) {
-    return { kind: "blocked", text: assistantFallback.contact, related: [] };
+    return { kind: "blocked", text: assistantFallback[locale].contact, related: [] };
   }
-  if (linkPattern.test(question)) return { kind: "blocked", text: assistantFallback.link, related: [] };
+  if (linkPattern.test(question)) return { kind: "blocked", text: assistantFallback[locale].link, related: [] };
   return null;
 };
 
@@ -52,8 +53,8 @@ const buildIndex = async () => {
     dtype: "q8",
     session_options: { enableCpuMemArena: false },
   });
-  const phrases = assistantEntries.flatMap((entry, entryIndex) =>
-    entry.questions.map((question) => ({ entryIndex, question })),
+  const phrases = locales.flatMap((locale) =>
+    assistantEntries[locale].flatMap((entry, entryIndex) => entry.questions.map((question) => ({ locale, entryIndex, question }))),
   );
   const vectors = await embedTexts(
     embed,
@@ -71,22 +72,23 @@ export const loadAssistant = () => {
   return indexPromise;
 };
 
-export const rankEntries = async (question: string) => {
+export const rankEntries = async (question: string, locale: Locale) => {
   const { embed, phrases } = await loadAssistant();
   const [questionVector] = await embedTexts(embed, [question]);
   const bestByEntry = new Map<number, { score: number; question: string }>();
   for (const phrase of phrases) {
+    if (phrase.locale !== locale) continue;
     const score = similarity(questionVector, phrase.vector);
     const best = bestByEntry.get(phrase.entryIndex);
     if (!best || score > best.score) bestByEntry.set(phrase.entryIndex, { score, question: phrase.question });
   }
   return [...bestByEntry.entries()]
-    .map(([entryIndex, best]) => ({ entry: assistantEntries[entryIndex], ...best }))
+    .map(([entryIndex, best]) => ({ entry: assistantEntries[locale][entryIndex], ...best }))
     .sort((first, second) => second.score - first.score);
 };
 
-export const answerQuestion = async (question: string): Promise<AssistantReply> => {
-  const ranked = await rankEntries(question);
+export const answerQuestion = async (question: string, locale: Locale): Promise<AssistantReply> => {
+  const ranked = await rankEntries(question, locale);
   const [top, ...rest] = ranked;
   const margin = top && rest[0] ? top.score - rest[0].score : 1;
   const isConfident =
@@ -111,6 +113,6 @@ export const answerQuestion = async (question: string): Promise<AssistantReply> 
 
   const related = relatedFrom(ranked, matchThresholds.suggestion);
   return related.length
-    ? { kind: "unsure", text: assistantFallback.unsure, related }
-    : { kind: "unknown", text: assistantFallback.unknown, related: [] };
+    ? { kind: "unsure", text: assistantFallback[locale].unsure, related }
+    : { kind: "unknown", text: assistantFallback[locale].unknown, related: [] };
 };

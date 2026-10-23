@@ -3,17 +3,17 @@ import LineIcon from "./LineIcon.astro";
 import { faqItems } from "../data/faq";
 import { company } from "../data/company";
 import { questionLimits } from "../lib/assistant-limits";
+import { pagePath, toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
 
-const suggestions = [
-  "Czym różni się rejs ze skipperem od rejsu z pełną załogą?",
-  "Kiedy na Cykladach wieje meltemi?",
-  "Czy z małym dzieckiem lepiej wybrać katamaran?",
-];
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+const items = faqItems[locale];
 
 const structuredData = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: faqItems.map((item) => ({
+  mainEntity: items.map((item) => ({
     "@type": "Question",
     name: item.question,
     acceptedAnswer: { "@type": "Answer", text: item.answer },
@@ -25,10 +25,10 @@ const structuredData = JSON.stringify({
   <div class="faq__inner">
     <div class="faq__aside">
       <header class="faq__intro">
-        <p class="label">Pytania przed rejsem</p>
-        <h2 id="faq-title" class="section-title">O co pytają nas<br />najczęściej</h2>
+        <p class="label">{t.faq.label}</p>
+        <h2 id="faq-title" class="section-title">{t.faq.titleLines[0]}<br />{t.faq.titleLines[1]}</h2>
         <p class="section-lead">
-          Nie ma tu Twojego pytania? Zapytaj asystenta albo napisz na <a class="faq__mail" href={`mailto:${company.email}`}>{company.email}</a>.
+          {t.faq.leadBeforeMail} <a class="faq__mail" href={`mailto:${company.email}`}>{company.email}</a>.
         </p>
       </header>
 
@@ -36,25 +36,25 @@ const structuredData = JSON.stringify({
         <div class="assistant__head">
           <span class="assistant__icon" aria-hidden="true"><LineIcon name="compass" /></span>
           <div>
-            <h3 class="assistant__title">Zapytaj asystenta</h3>
-            <p class="assistant__badge">Odpowiedzi z bazy wiedzy Kilwater</p>
+            <h3 class="assistant__title">{t.assistant.title}</h3>
+            <p class="assistant__badge">{t.assistant.badge}</p>
           </div>
         </div>
 
         <form class="assistant__form" data-assistant-form novalidate>
-          <label class="assistant__label" for="assistant-question">Twoje pytanie o rejs</label>
+          <label class="assistant__label" for="assistant-question">{t.assistant.fieldLabel}</label>
           <textarea
             class="assistant__field"
             id="assistant-question"
             name="question"
             rows="2"
             maxlength={questionLimits.max}
-            placeholder="Na przykład: co zabrać na tydzień na jachcie?"
+            placeholder={t.assistant.placeholder}
             aria-describedby="assistant-count assistant-note"
             data-assistant-question
           ></textarea>
           <div class="assistant__trap" aria-hidden="true">
-            <label for="assistant-website">Nie wypełniaj tego pola</label>
+            <label for="assistant-website">{t.assistant.trapLabel}</label>
             <input id="assistant-website" name="website" type="text" tabindex="-1" autocomplete="off" />
           </div>
           <p class="assistant__error" role="alert" data-assistant-error>
@@ -63,9 +63,9 @@ const structuredData = JSON.stringify({
           </p>
           <div class="assistant__row">
             <p class="assistant__count" id="assistant-count" data-assistant-count>0 / {questionLimits.max}</p>
-            <p class="assistant__shortcut"><kbd>Enter</kbd> wysyła</p>
+            <p class="assistant__shortcut"><kbd>Enter</kbd> {t.assistant.shortcut}</p>
             <button class="button button--solid assistant__submit" type="submit" data-assistant-submit>
-              <span data-assistant-submit-label>Zapytaj</span>
+              <span data-assistant-submit-label>{t.assistant.submit}</span>
               <span class="button__arrow" aria-hidden="true">→</span>
             </button>
           </div>
@@ -75,7 +75,7 @@ const structuredData = JSON.stringify({
           <p class="assistant__asked" data-assistant-asked></p>
           <div class="assistant__loading" data-assistant-loading hidden>
             <span class="assistant__dots" aria-hidden="true"><span></span><span></span><span></span></span>
-            Asystent przygotowuje odpowiedź
+            {t.assistant.loading}
           </div>
           <div class="assistant__answer" data-assistant-answer hidden>
             <svg class="assistant__notice-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M12 11v6 M12 7.5v.5"></path></svg>
@@ -88,30 +88,29 @@ const structuredData = JSON.stringify({
             <span data-assistant-cta-label></span> <span aria-hidden="true">→</span>
           </a>
           <div class="assistant__related" data-assistant-related hidden>
-            <p class="assistant__suggestions-label" id="assistant-related-label">Podobne pytania:</p>
+            <p class="assistant__suggestions-label" id="assistant-related-label">{t.assistant.relatedLabel}</p>
             <ul aria-labelledby="assistant-related-label" data-assistant-related-list></ul>
           </div>
         </div>
 
         <div class="assistant__suggestions">
-          <p class="assistant__suggestions-label" id="assistant-suggestions-label">Możesz zacząć od:</p>
+          <p class="assistant__suggestions-label" id="assistant-suggestions-label">{t.assistant.suggestionsLabel}</p>
           <ul aria-labelledby="assistant-suggestions-label">
-            {suggestions.map((suggestion) => (
+            {t.assistant.suggestions.map((suggestion) => (
               <li><button class="assistant__chip" type="button" data-assistant-suggestion>{suggestion}</button></li>
             ))}
           </ul>
         </div>
 
         <p class="assistant__note" id="assistant-note">
-          Asystent automatycznie dobiera odpowiedź z naszej bazy pytań i działa na serwerze Kilwater. Pytania nie trafiają
-          do firm zewnętrznych i nie są zapisywane. Wiążące informacje dostaniesz od brokera.{" "}
-          <a href="/polityka-prywatnosci#asystent-na-stronie">Jak działa asystent</a>
+          {t.assistant.note}{" "}
+          <a href={`${pagePath("privacy", locale)}#${locale === "en" ? "on-site-assistant" : "asystent-na-stronie"}`}>{t.assistant.noteLink}</a>
         </p>
       </div>
     </div>
 
     <div class="faq__list">
-      {faqItems.map((item, index) => (
+      {items.map((item, index) => (
         <details class="faq__item" open={index === 0}>
           <summary class="faq__question">
             <span>{item.question}</span>
@@ -128,6 +127,11 @@ const structuredData = JSON.stringify({
 <script>
   import { company } from "../data/company";
   import { questionLimits } from "../lib/assistant-limits";
+  import { toLocale } from "../i18n/locales";
+  import { useTranslations } from "../i18n/ui";
+
+  const locale = toLocale(document.documentElement.lang);
+  const t = useTranslations(locale).assistant;
 
   type AssistantResponse = {
     ok: boolean;
@@ -163,14 +167,14 @@ const structuredData = JSON.stringify({
   const relatedList = pick("related-list");
 
   const failureMessages: Record<string, string> = {
-    rate_limited: "To dużo pytań w krótkim czasie. Spróbuj ponownie za kilka minut.",
-    unavailable: `Asystent jest chwilowo niedostępny. Napisz do nas na ${company.email}.`,
-    error: "Nie udało się przygotować odpowiedzi. Spróbuj zadać pytanie jeszcze raz.",
-    offline: "Brak połączenia z internetem. Sprawdź połączenie i spróbuj ponownie.",
+    rate_limited: t.failures.rate_limited,
+    unavailable: t.failures.unavailable(company.email),
+    error: t.failures.error,
+    offline: t.failures.offline,
   };
 
   const mailtoFor = (question: string) =>
-    `mailto:${company.email}?subject=${encodeURIComponent("Pytanie o rejs")}&body=${encodeURIComponent(question)}`;
+    `mailto:${company.email}?subject=${encodeURIComponent(t.mailSubject)}&body=${encodeURIComponent(question)}`;
 
   const showError = (message: string) => {
     if (errorText) errorText.textContent = message;
@@ -187,7 +191,7 @@ const structuredData = JSON.stringify({
       submit.disabled = isLoading;
       submit.setAttribute("aria-busy", String(isLoading));
     }
-    if (submitLabel) submitLabel.textContent = isLoading ? "Czekaj" : "Zapytaj";
+    if (submitLabel) submitLabel.textContent = isLoading ? t.waiting : t.submit;
     if (loading) loading.hidden = !isLoading;
   };
 
@@ -219,12 +223,12 @@ const structuredData = JSON.stringify({
     if (!answer || !answerText || !matched) return;
     answer.dataset.kind = body.kind;
     answerText.textContent = body.text ?? "";
-    matched.textContent = body.matchedQuestion ? `Najbliższe pytanie w naszej bazie: „${body.matchedQuestion}”` : "";
+    matched.textContent = body.matchedQuestion ? t.matched(body.matchedQuestion) : "";
     matched.hidden = !body.matchedQuestion || body.matchedQuestion.toLowerCase() === question.toLowerCase();
     answer.hidden = false;
 
     if (body.link) showCta(body.link.href, body.link.label);
-    else if (body.kind === "unsure" || body.kind === "unknown") showCta(mailtoFor(question), `Napisz na ${company.email}`);
+    else if (body.kind === "unsure" || body.kind === "unknown") showCta(mailtoFor(question), t.mailCta(company.email));
     showRelated(body.related ?? []);
 
     answer.classList.remove("is-entering");
@@ -241,7 +245,7 @@ const structuredData = JSON.stringify({
   const ask = async (question: string) => {
     const trimmed = question.replace(/\s+/g, " ").trim();
     if (trimmed.length < questionLimits.min) {
-      showError(`Wpisz pytanie, co najmniej ${questionLimits.min} znaki.`);
+      showError(t.minLength(questionLimits.min));
       field?.focus();
       return;
     }
@@ -257,7 +261,7 @@ const structuredData = JSON.stringify({
       const response = await fetch("/api/asystent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: trimmed, website }),
+        body: JSON.stringify({ question: trimmed, website, lang: locale }),
       });
       const body: AssistantResponse = await response.json().catch(() => ({ ok: false }));
       if (body.ok && body.kind && body.text) {

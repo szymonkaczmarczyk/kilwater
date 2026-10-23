@@ -111,6 +111,19 @@ test.describe.serial("asystent w FAQ", () => {
     expect(await bot.json()).toMatchObject({ ok: true, kind: "unknown" });
   });
 
+  test("na angielskiej stronie asystent odpowiada po angielsku", async ({ page }) => {
+    await page.goto("/en/");
+    const assistant = assistantOf(page);
+    await expect(assistant.getByText("Answers from the Kilwater knowledge base")).toBeVisible();
+    await assistant.getByLabel("Your question about the cruise").fill("can my labrador come on the boat");
+    await assistant.getByRole("button", { name: "Ask" }).click();
+    await expect(assistant.locator("[data-assistant-text]")).toContainText("It depends on the owner");
+    await assistant.getByLabel("Your question about the cruise").fill("how to bake a cheesecake");
+    await assistant.getByRole("button", { name: "Ask" }).click();
+    await expect(assistant.locator("[data-assistant-text]")).toContainText("I do not know the answer");
+    await expect(assistant.getByRole("link", { name: "Write to kontakt@kilwater.com" })).toBeVisible();
+  });
+
   test("API ogranicza liczbę pytań z jednego adresu", async ({ request }) => {
     const statuses: number[] = [];
     for (let attempt = 0; attempt < 16; attempt += 1) {

@@ -1,0 +1,43 @@
+import { guestLimits, messageMaxLength } from "../data/inquiry-options";
+import type { Localized } from "./locales";
+
+export const inquiryMessages = {
+  pl: {
+    destination: "Wybierz akwen albo „Jeszcze nie wiem”.",
+    startDateMissing: "Podaj datę wypłynięcia.",
+    startDatePast: "Data wypłynięcia nie może być w przeszłości.",
+    nights: "Wybierz długość rejsu.",
+    guestsMissing: "Podaj liczbę osób.",
+    guestsInteger: "Liczba osób musi być liczbą całkowitą.",
+    guestsMin: `Minimum ${guestLimits.min} osoba.`,
+    guestsMax: `Maksymalnie ${guestLimits.max} osób na jednym jachcie.`,
+    guestsRange: `Podaj od ${guestLimits.min} do ${guestLimits.max} osób.`,
+    cruiseType: "Wybierz rodzaj rejsu.",
+    nameMissing: "Podaj imię i nazwisko.",
+    nameTooLong: "Imię i nazwisko jest za długie.",
+    email: "Podaj poprawny adres e-mail, np. jan@przyklad.pl.",
+    phone: "Podaj numer w formacie +48 600 000 000 albo zostaw puste.",
+    message: `Wiadomość może mieć maksymalnie ${messageMaxLength} znaków.`,
+    consent: "Zaznacz akceptację regulaminu, żebyśmy mogli przygotować ofertę.",
+    unsupported: "To pole nie jest obsługiwane.",
+  },
+  en: {
+    destination: "Choose a sailing area or “Not sure yet”.",
+    startDateMissing: "Enter a departure date.",
+    startDatePast: "The departure date cannot be in the past.",
+    nights: "Choose the length of the cruise.",
+    guestsMissing: "Enter the number of people.",
+    guestsInteger: "The number of people must be a whole number.",
+    guestsMin: `At least ${guestLimits.min} person.`,
+    guestsMax: `At most ${guestLimits.max} people on one yacht.`,
+    guestsRange: `Enter between ${guestLimits.min} and ${guestLimits.max} people.`,
+    cruiseType: "Choose the type of cruise.",
+    nameMissing: "Enter your full name.",
+    nameTooLong: "The name is too long.",
+    email: "Enter a valid email address, e.g. john@example.com.",
+    phone: "Enter a number like +44 7700 900000 or leave it empty.",
+    message: `The message can have at most ${messageMaxLength} characters.`,
+    consent: "Accept the terms so we can prepare your offer.",
+    unsupported: "This field is not supported.",
+  },
+} satisfies Localized<Record<string, string>>;

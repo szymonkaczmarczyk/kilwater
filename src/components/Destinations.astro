@@ -5,40 +5,33 @@ import greeceImage from "../assets/photos/akwen-grecja.png";
 import italyImage from "../assets/photos/akwen-wlochy.png";
 import masuriaImage from "../assets/photos/akwen-mazury.jpg";
 import { destinationTexts } from "../data/offer";
+import { sectionHref, toLocale } from "../i18n/locales";
+import { useTranslations } from "../i18n/ui";
 
-const destinationMedia = {
-  chorwacja: {
-    image: croatiaImage,
-    alt: "Kamienny port w Dalmacji o zachodzie słońca, drewniane jachty żaglowe zacumowane rufą do nabrzeża, w tle dzwonnica i góry",
-    focus: "50% 60%",
-  },
-  grecja: {
-    image: greeceImage,
-    alt: "Biały katamaran na kotwicy w turkusowej zatoce otoczonej jasnymi wapiennymi klifami na greckiej wyspie",
-    focus: "38% 50%",
-  },
-  wlochy: {
-    image: italyImage,
-    alt: "Klasyczny jacht motorowy z mahoniowym pokładem płynie przed kolorowym miasteczkiem na klifach Wybrzeża Amalfi",
-    focus: "42% 50%",
-  },
-  mazury: {
-    image: masuriaImage,
-    alt: "Drewniana żaglówka z kremowymi żaglami sunie przez poranną mgłę na mazurskim jeziorze, na pierwszym planie złote trzciny",
-    focus: "50% 45%",
-  },
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale).destinations;
+
+const destinationMedia: Record<string, { image: typeof croatiaImage; focus: string }> = {
+  chorwacja: { image: croatiaImage, focus: "50% 60%" },
+  grecja: { image: greeceImage, focus: "38% 50%" },
+  wlochy: { image: italyImage, focus: "42% 50%" },
+  mazury: { image: masuriaImage, focus: "50% 45%" },
 };
 
-const destinations = destinationTexts.map((destination) => ({ ...destination, ...destinationMedia[destination.slug] }));
+const destinations = destinationTexts[locale].map((destination) => ({
+  ...destination,
+  ...destinationMedia[destination.slug],
+  alt: t.imageAlts[destination.slug],
+}));
 ---
 
 <section class="destinations" id="akweny" aria-labelledby="destinations-title">
   <div class="destinations__inner">
     <header class="destinations__head">
-      <p class="label">Akweny</p>
-      <h2 id="destinations-title" class="section-title">Cztery wody,<br />cztery rytmy rejsu</h2>
+      <p class="label">{t.label}</p>
+      <h2 id="destinations-title" class="section-title">{t.titleLines[0]}<br />{t.titleLines[1]}</h2>
       <p class="section-lead">
-        Każdy akwen pływa się inaczej. Pomożemy wybrać ten, który pasuje do Twojej załogi, terminu i doświadczenia.
+        {t.lead}
       </p>
     </header>
 
@@ -67,8 +60,8 @@ const destinations = destinationTexts.map((destination) => ({ ...destination, ..
             <h3 class="destination__name">{destination.name}</h3>
             <p class="destination__region">{destination.region}</p>
             <p class="destination__text">{destination.text}</p>
-            <a class="link-underline" href={`/?akwen=${destination.slug}#zapytanie`}>
-              Zapytaj o rejs: {destination.name}
+            <a class="link-underline" href={sectionHref(locale, "zapytanie", { akwen: destination.slug })}>
+              {t.askAbout(destination.name)}
               <span class="button__arrow" aria-hidden="true">&nbsp;→</span>
             </a>
             <span class="wake-point wake-point--mobile destination__wake-end" data-wake-point aria-hidden="true"></span>
