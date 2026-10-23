@@ -14,7 +14,7 @@ export default defineConfig({
   webServer: {
     command: "npm run build && node ./dist/server/entry.mjs",
     url: `http://localhost:${port}`,
-    env: { PORT: String(port), HOST: "localhost", INQUIRY_DRY_RUN: "1" },
+    env: { PORT: String(port), HOST: "localhost", INQUIRY_DRY_RUN: "1", ASSISTANT_RATE_LIMIT: "15" },
     reuseExistingServer: false,
     timeout: 120_000,
   },

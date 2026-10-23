@@ -4,45 +4,32 @@ import croatiaImage from "../assets/photos/akwen-chorwacja.png";
 import greeceImage from "../assets/photos/akwen-grecja.png";
 import italyImage from "../assets/photos/akwen-wlochy.png";
 import masuriaImage from "../assets/photos/akwen-mazury.jpg";
+import { destinationTexts } from "../data/offer";
 
-const destinations = [
-  {
-    slug: "chorwacja",
-    name: "Chorwacja",
-    region: "Dalmacja i Kornati",
-    text: "Kamienne miasteczka, mariny co kilka mil i zatoki na noc pod sosnami. Krótkie przeloty sprawiają, że to dobry wybór na pierwszy rejs.",
+const destinationMedia = {
+  chorwacja: {
     image: croatiaImage,
     alt: "Kamienny port w Dalmacji o zachodzie słońca, drewniane jachty żaglowe zacumowane rufą do nabrzeża, w tle dzwonnica i góry",
     focus: "50% 60%",
   },
-  {
-    slug: "grecja",
-    name: "Grecja",
-    region: "Cyklady i Wyspy Jońskie",
-    text: "Białe klify, turkusowe zatoki i meltemi, który na Cykladach daje żeglarzom prawdziwą frajdę. Na Morzu Jońskim spokojniej i bardziej zielono.",
+  grecja: {
     image: greeceImage,
     alt: "Biały katamaran na kotwicy w turkusowej zatoce otoczonej jasnymi wapiennymi klifami na greckiej wyspie",
     focus: "38% 50%",
   },
-  {
-    slug: "wlochy",
-    name: "Włochy",
-    region: "Wybrzeże Amalfi, Sardynia, Sycylia",
-    text: "Wybrzeże, które najlepiej wygląda od strony morza, i kuchnia, która sama w sobie jest powodem rejsu. Dobre na jacht motorowy.",
+  wlochy: {
     image: italyImage,
     alt: "Klasyczny jacht motorowy z mahoniowym pokładem płynie przed kolorowym miasteczkiem na klifach Wybrzeża Amalfi",
     focus: "42% 50%",
   },
-  {
-    slug: "mazury",
-    name: "Mazury",
-    region: "Wielkie Jeziora Mazurskie",
-    text: "Rejs bez lotu i bez fali. Mgła o świcie, trzciny, ciche zatoki i wieczory przy kei. Najprostszy sposób, żeby sprawdzić, czy żagle są dla Ciebie.",
+  mazury: {
     image: masuriaImage,
     alt: "Drewniana żaglówka z kremowymi żaglami sunie przez poranną mgłę na mazurskim jeziorze, na pierwszym planie złote trzciny",
     focus: "50% 45%",
   },
-];
+};
+
+const destinations = destinationTexts.map((destination) => ({ ...destination, ...destinationMedia[destination.slug] }));
 ---
 
 <section class="destinations" id="akweny" aria-labelledby="destinations-title">

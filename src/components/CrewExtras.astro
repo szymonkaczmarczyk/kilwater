@@ -2,33 +2,10 @@
 import { Picture } from "astro:assets";
 import LineIcon, { type IconName } from "./LineIcon.astro";
 import extrasImage from "../assets/photos/dodatki.webp";
+import { crewRoles, extraItems } from "../data/offer";
 
-const crew: { icon: IconName; role: string; text: string }[] = [
-  {
-    icon: "helm",
-    role: "Skipper",
-    text: "Prowadzi jacht, układa trasę pod pogodę i zna porty, w których warto stanąć na noc.",
-  },
-  {
-    icon: "cup",
-    role: "Hostessa",
-    text: "Dba o kabiny i pokład, żeby rano czekała kawa, a wieczorem świeże ręczniki.",
-  },
-  {
-    icon: "chef",
-    role: "Kucharz",
-    text: "Gotuje z lokalnych produktów kupionych w porcie, pod gusta i diety całej załogi.",
-  },
-];
-
-const extras: { icon: IconName; name: string; text: string }[] = [
-  { icon: "paddleboard", name: "Deski SUP", text: "Na poranne wypady wzdłuż brzegu zatoki." },
-  { icon: "mask", name: "Sprzęt do snorkelingu", text: "Maski, rurki i płetwy w rozmiarach całej załogi." },
-  { icon: "dinghy", name: "Ponton z silnikiem", text: "Do zejścia na ląd, gdy jacht stoi na kotwicy." },
-  { icon: "plane", name: "Transfer z lotniska", text: "Z hali przylotów prosto do mariny." },
-  { icon: "basket", name: "Zaopatrzenie jachtu", text: "Lista zakupów rozpakowana, zanim wejdziesz na pokład." },
-  { icon: "towel", name: "Pościel i ręczniki", text: "Komplet na każdą koję i sprzątanie po rejsie." },
-];
+const crew: readonly { icon: IconName; role: string; text: string }[] = crewRoles;
+const extras: readonly { icon: IconName; name: string; text: string }[] = extraItems;
 ---
 
 <section class="crew" id="zaloga" aria-labelledby="crew-title">

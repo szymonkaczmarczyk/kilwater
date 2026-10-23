@@ -33,6 +33,18 @@ Serwer strony zapisuje też dane techniczne: adres IP, datę i godzinę zapytani
 
 Nie wysyłamy newslettera i nie używamy Twoich danych do marketingu.
 
+## Asystent na stronie
+
+W sekcji „Pytania przed rejsem” możesz zadać pytanie asystentowi. Asystent działa w całości na naszym serwerze: model językowy porównuje sens Twojego pytania z naszą bazą typowych pytań i pokazuje gotową odpowiedź przygotowaną przez Kilwater. Jeśli jej nie znajdzie, podpowiada kontakt e-mailowy.
+
+- Treść pytania nie trafia do żadnej firmy zewnętrznej ani dostawcy sztucznej inteligencji.
+- Nie zapisujemy treści pytań. Serwer zapisuje tylko rodzaj odpowiedzi (znaleziona albo nie) oraz dane techniczne opisane wyżej, potrzebne do ograniczania liczby pytań.
+- Pytania z adresem e-mail, numerem telefonu albo linkiem odrzucamy, zanim zostaną przetworzone.
+- Podstawą przetwarzania treści pytania jest nasz prawnie uzasadniony interes, czyli odpowiedź na pytanie, które sam zadajesz (art. 6 ust. 1 lit. f RODO).
+- Asystent nie podejmuje wobec Ciebie żadnych decyzji i nie tworzy Twojego profilu.
+
+Nie wpisuj w pytaniu danych osobowych, zwłaszcza informacji o zdrowiu. Sprawy, które ich wymagają, załatwisz przez formularz zapytania albo bezpośrednio z brokerem.
+
 ## Komu przekazujemy dane
 
 Twoje dane mogą trafić do:

@@ -19,8 +19,8 @@ test("link w menu przewija do sekcji i nie zostawia kotwicy w adresie", async ({
 
 test("wejście z podstrony na kotwicę otwiera właściwą sekcję", async ({ page }) => {
   await page.goto("/regulamin");
-  await page.getByRole("navigation", { name: "Główna nawigacja" }).getByRole("link", { name: "Jak to działa" }).click();
-  await expect(page.locator("#jak-to-dziala")).toBeInViewport();
+  await page.getByRole("navigation", { name: "Główna nawigacja" }).getByRole("link", { name: "Kiedy płynąć" }).click();
+  await expect(page.locator("#kiedy-plynac")).toBeInViewport();
   await expect(page).toHaveURL("/");
 });
 

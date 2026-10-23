@@ -202,6 +202,8 @@ import {
 <script>
   import { guestLimits, messageMaxLength } from "../data/inquiry-options";
   import { navigationEvent } from "../scripts/motion";
+  import { sampleRoutes } from "../data/routes";
+  import { seasonMonths } from "../data/seasons";
 
   type FieldErrors = Record<string, string>;
 
@@ -327,17 +329,50 @@ import {
 
   if (form) {
     const destinationSelect = form.querySelector<HTMLSelectElement>("#destination");
-    const applyDestinationFromUrl = () => {
-      const presetDestination = new URLSearchParams(window.location.search).get("akwen");
+    const dateInput = form.querySelector<HTMLInputElement>("[data-min-today]");
+    const presetMessageInput = form.querySelector<HTMLTextAreaElement>("#message");
+    if (dateInput) dateInput.min = todayIso();
+
+    const presetFilled = { startDate: "", message: "" };
+    const canOverwrite = (control: HTMLInputElement | HTMLTextAreaElement, field: keyof typeof presetFilled) =>
+      control.value === "" || control.value === presetFilled[field];
+
+    const firstSaturdayFrom = (month: number) => {
+      const today = todayIso();
+      for (const year of [new Date().getFullYear(), new Date().getFullYear() + 1]) {
+        const date = new Date(Date.UTC(year, month - 1, 1));
+        date.setUTCDate(1 + ((6 - date.getUTCDay() + 7) % 7));
+        const iso = date.toISOString().slice(0, 10);
+        if (iso >= today) return iso;
+      }
+      return "";
+    };
+
+    const applyPresetFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const presetDestination = params.get("akwen");
       if (presetDestination && destinationSelect?.querySelector(`option[value="${CSS.escape(presetDestination)}"]`)) {
         destinationSelect.value = presetDestination;
       }
-    };
-    applyDestinationFromUrl();
-    window.addEventListener(navigationEvent, applyDestinationFromUrl);
 
-    const dateInput = form.querySelector<HTMLInputElement>("[data-min-today]");
-    if (dateInput) dateInput.min = todayIso();
+      const presetMonth = Number(params.get("miesiac"));
+      if (dateInput && canOverwrite(dateInput, "startDate")) {
+        const monthIsKnown = seasonMonths.some((month) => month.number === presetMonth);
+        dateInput.value = monthIsKnown ? firstSaturdayFrom(presetMonth) : "";
+        presetFilled.startDate = dateInput.value;
+      }
+
+      const presetRoute = sampleRoutes.find((route) => route.slug === params.get("trasa"));
+      if (presetMessageInput && canOverwrite(presetMessageInput, "message")) {
+        presetMessageInput.value = presetRoute
+          ? `Interesuje mnie trasa „${presetRoute.title}” (${presetRoute.nights} nocy). Proszę o propozycję jachtu na ten plan.`
+          : "";
+        presetFilled.message = presetMessageInput.value;
+        if (messageCount) messageCount.textContent = `${presetMessageInput.value.length} / ${messageMaxLength}`;
+      }
+    };
+    applyPresetFromUrl();
+    window.addEventListener(navigationEvent, applyPresetFromUrl);
 
     const guestsInput = form.querySelector<HTMLInputElement>("#guests");
     form.querySelectorAll<HTMLButtonElement>("[data-step]").forEach((button) => {

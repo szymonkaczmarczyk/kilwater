@@ -28,8 +28,10 @@ secrets/
 .netrc
 
 CLAUDE.md
+claude.md
 CLAUDE.local.md
 AGENTS.md
+agents.md
 GEMINI.md
 zasady-projektu.md
 .claude/
@@ -57,3 +59,5 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+/models/

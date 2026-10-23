@@ -8,6 +8,7 @@
   --color-brass-500: #b08a4e;
   --color-brass-300: #d4b98a;
   --color-coral-400: #f08a73;
+  --color-rust-700: #a8412c;
   --color-sea-green-300: #8fd1a8;
 
   --surface-page: var(--color-sand-50);
@@ -22,6 +23,7 @@
   --accent: var(--color-brass-500);
   --focus-ring: var(--color-brass-500);
   --scrim-deep: color-mix(in srgb, var(--color-navy-950) 55%, transparent);
+  --danger: var(--color-rust-700);
   --danger-on-deep: var(--color-coral-400);
   --success-on-deep: var(--color-sea-green-300);
   --field-on-deep: color-mix(in srgb, var(--color-sand-50) 6%, transparent);

@@ -58,11 +58,12 @@ produkcji bez konfiguracji endpoint zwraca `503`, żeby zapytania nie ginęły p
 
 | Adres | Co to jest |
 |---|---|
-| `/` | Landing: hero, czym jest Kilwater, akweny, rodzaje rejsów, załoga i dodatki, jak to działa, formularz |
+| `/` | Landing: hero, czym jest Kilwater, akweny, rodzaje rejsów, załoga i dodatki, przykładowe trasy, kalendarz sezonu, jak to działa, FAQ, formularz |
 | `/polityka-prywatnosci` | Polityka prywatności zgodna z RODO, ze spisem treści |
 | `/regulamin` | Regulamin serwisu według ustawy o świadczeniu usług drogą elektroniczną |
 | każdy inny adres | Strona 404 „Ten kurs prowadzi prosto we mgłę” |
 | `POST /api/zapytanie` | Przyjęcie zapytania o rejs |
+| `POST /api/asystent` | Odpowiedź asystenta na pytanie o rejs (`GET` wczytuje model z wyprzedzeniem) |
 | `/sitemap.xml`, `/robots.txt` | Mapa strony i zasady dla robotów |
 
 **Landing**
@@ -73,7 +74,15 @@ produkcji bez konfiguracji endpoint zwraca `503`, żeby zapytania nie ginęły p
   mały jacht. Na telefonie przechodzi z boku na bok za zdjęciami.
 - **Akweny** - cztery kadry w układzie 1-2-1, z paralaksą i linkami ustawiającymi akwen w formularzu.
 - **Rodzaje rejsów** - granatowa sekcja z przyklejonym zdjęciem, które zmienia się przy przewijaniu.
+- **Przykładowe trasy** - cztery tygodniowe pętle (Split, Cyklady, Amalfi, Mazury) w zakładkach. Mapa
+  w SVG rysuje się po wejściu w sekcję, a najechanie na dzień planu podświetla odcinek i porty.
+  Przycisk „Zapytaj o tę trasę” ustawia akwen i wpisuje trasę do wiadomości w formularzu.
+- **Kalendarz sezonu** - tabela akwenów i miesięcy od kwietnia do października. Kliknięcie pola pokazuje
+  opis terminu, wiatr i temperaturę wody, a przycisk ustawia akwen i pierwszą sobotę miesiąca w formularzu.
 - **Jak to działa** - cztery kroki na osi czasu wypełnianej przy przewijaniu.
+- **FAQ** - dziesięć pytań w rozwijanych sekcjach `details`, z danymi strukturalnymi `FAQPage`.
+- **Asystent** - okno „Zapytaj asystenta” obok FAQ. Lokalny model `bge-m3` na serwerze porównuje sens pytania
+  z bazą typowych pytań i pokazuje gotową odpowiedź Kilwater. Gdy jej nie zna, odsyła na e-mail.
 - **Formularz** - karty wyboru, stepper liczby osób, licznik znaków, skrót Ctrl/⌘ + Enter, stany błędu,
   wysyłania i sukcesu.
 - **Stopka** - litery KILWATER wynurzają się z wody, gdy przepływa pod nimi jacht.
@@ -91,6 +100,14 @@ Wszystkie animacje wyłączają się przy `prefers-reduced-motion`. Strona wtedy
 | Rodzaje rejsów | Dodatki na pokład |
 |---|---|
 | ![Granatowa sekcja rejsu z pełną załogą i przyklejonym zdjęciem](docs/screenshots/rejsy.jpg) | ![Lista dodatków z ikonami obok zdjęcia desek SUP](docs/screenshots/dodatki.jpg) |
+
+| Przykładowe trasy | Kalendarz sezonu |
+|---|---|
+| ![Zakładki tras i mapa pętli z Splitu po wyspach Dalmacji obok planu dzień po dniu](docs/screenshots/trasy.png) | ![Kalendarz sezonu z wybranym wrześniem w Grecji i opisem wiatru oraz wody](docs/screenshots/kalendarz-sezonu.png) |
+
+| FAQ i asystent | Trasa na telefonie |
+|---|---|
+| ![Pytania przed rejsem z oknem asystenta i rozwijanymi odpowiedziami](docs/screenshots/faq.png) | ![Mapa trasy po Dalmacji i plan dni na telefonie](docs/screenshots/mobile-trasy.png) |
 
 | Jak to działa | Stopka |
 |---|---|
@@ -110,7 +127,7 @@ Wszystkie animacje wyłączają się przy `prefers-reduced-motion`. Strona wtedy
 |---|---|
 | ![Hero na telefonie z jachtem w łukowym oknie](docs/screenshots/mobile-hero.jpg) | ![Pełnoekranowe menu z przyciskiem Zamknij po lewej](docs/screenshots/mobile-menu.png) |
 
-Zrzuty pokazują stronę w trybie ograniczonego ruchu, czyli w stanie końcowym animacji. Dane w formularzu są
+Zrzuty pokazują stan końcowy animacji. Dane w formularzu są
 przykładowe.
 
 ## Uruchomienie
@@ -119,6 +136,7 @@ Wymagany Node.js 22.23.4 lub nowszy (wymóg Astro 7).
 
 ```bash
 npm install
+npm run assistant:model  # jednorazowo: model asystenta, ok. 560 MB do folderu models/
 npm run dev              # http://localhost:4520
 ```
 
@@ -134,7 +152,9 @@ HOST=0.0.0.0 PORT=8080 node ./dist/server/entry.mjs
 | `npm run dev` | Serwer deweloperski na porcie 4520. Zapytania z formularza trafiają do logu |
 | `npm run build` | Build: statyczne strony w `dist/client`, serwer w `dist/server` |
 | `npm run preview` | Podgląd buildu |
-| `npm run test:e2e` | 21 testów Playwright na buildzie produkcyjnym (port 4521) |
+| `npm run assistant:model` | Pobiera model asystenta `Xenova/bge-m3` do `models/` (raz, także przy wdrożeniu) |
+| `npm run test:e2e` | 38 testów Playwright na buildzie produkcyjnym (port 4521) |
+| `npm run assistant:eval` | 48 pytań kontrolnych: parafrazy z bazy, pytania bliskie tematu bez odpowiedzi, pytania spoza tematu i filtr danych kontaktowych |
 | `npm run brand:assets` | Generuje favicon (`.ico`, `.svg`, ikonę Apple) i obraz OG 1200x630 ze znaku logo |
 | `npm run images:strip` | Usuwa metadane (EXIF, XMP, C2PA) ze zdjęć w `src/assets/photos`, `public` i `docs/screenshots` |
 
@@ -143,8 +163,7 @@ ją na osobnym porcie.
 
 ## Konfiguracja
 
-Zmienne w `.env` (wzór w `.env.example`, sam `.env` jest w `.gitignore`). Wszystkie są potrzebne tylko do
-wysyłki formularza.
+Zmienne w `.env` (wzór w `.env.example`, sam `.env` jest w `.gitignore`).
 
 | Zmienna | Opis |
 |---|---|
@@ -152,10 +171,36 @@ wysyłki formularza.
 | `INQUIRY_TO_EMAIL` | Adres, na który przychodzą zapytania, np. `kontakt@kilwater.com` |
 | `INQUIRY_FROM_EMAIL` | Nadawca zweryfikowany w Resend, np. `Kilwater <zapytania@kilwater.com>` |
 | `INQUIRY_DRY_RUN` | `1` = zapytanie tylko w logu serwera. Do testów, nigdy na produkcji |
+| `ASSISTANT_RATE_LIMIT` | Ile pytań do asystenta na 10 minut z jednego adresu IP, domyślnie 20 |
 | `HOST`, `PORT` | Adres i port serwera produkcyjnego |
 
 Adres strony do canonical, Open Graph i sitemapy ustawia `site` w `astro.config.mjs` (`https://kilwater.com`).
 Dane firmy w stopce i formularzu są w `src/data/company.ts`.
+
+### Asystent (model lokalny)
+
+Asystent nie korzysta z płatnego API. Model `Xenova/bge-m3` (ok. 560 MB, licencja MIT) działa w procesie Node
+przez `@huggingface/transformers` i ONNX Runtime, bez karty graficznej.
+
+1. Pobierz model: `npm run assistant:model`. Pliki trafiają do `models/` (w `.gitignore`), więc na serwerze
+   uruchom to polecenie raz przy wdrożeniu. W działaniu serwer nie pobiera niczego z internetu.
+2. Serwer uruchamiaj z katalogu projektu, bo model jest szukany w `./models`.
+3. Pamięć: proces z wczytanym modelem zajmuje ok. 1 GB RAM, więc wystarczy serwer z 2 GB. Pierwsze pytanie po
+   starcie wczytuje model przez kilka sekund. Strona uruchamia to wcześniej, gdy ktoś zbliża się do FAQ.
+   Kolejne odpowiedzi trwają kilkadziesiąt milisekund.
+
+Jak to działa:
+
+| Krok | Co robi |
+|---|---|
+| Filtr na serwerze | Odrzuca puste i za długie pytania, linki, e-maile i numery telefonów |
+| Baza wiedzy | `src/data/assistant-answers.ts`: FAQ z typowymi sformułowaniami (`alsoAsked` w `faq.ts`) oraz odpowiedzi składane z danych strony: akweny, sezon, trasy, rodzaje rejsów, załoga, dodatki, kontakt |
+| Dopasowanie | Model zamienia pytanie na wektor i porównuje z każdym sformułowaniem w bazie |
+| Odpowiedź | Gotowa odpowiedź i link, gdy podobieństwo wynosi co najmniej 0,80 albo co najmniej 0,70 z przewagą 0,04 nad drugą odpowiedzią. W pozostałych przypadkach od 0,64: „nie mam pewnej odpowiedzi” z podobnymi pytaniami. Poniżej: odesłanie na e-mail z treścią pytania |
+
+Asystent nigdy nie pisze własnych zdań, pokazuje tylko teksty z bazy, więc nie da się go użyć do innych tematów.
+Żeby nauczyć go nowego pytania, dopisz sformułowanie do `alsoAsked` albo nową pozycję w `assistant-answers.ts`
+i uruchom `npm run assistant:eval`.
 
 ### Wysyłka e-mail (Resend)
 
@@ -169,18 +214,24 @@ Dane firmy w stopce i formularzu są w `src/data/company.ts`.
 ```
 src/
   pages/            index, 404, polityka-prywatnosci.md, regulamin.md, sitemap.xml.ts
-  pages/api/        zapytanie.ts - endpoint formularza
-  components/       sekcje landingu (Hero, Destinations, CruiseTypes, CrewExtras, Process, Inquiry),
+  pages/api/        zapytanie.ts - endpoint formularza, asystent.ts - endpoint asystenta
+  components/       sekcje landingu (Hero, Destinations, CruiseTypes, CrewExtras, SampleRoutes,
+                    SeasonCalendar, Process, Faq, Inquiry),
                     Voyage (linia fali), Nav, Footer, Logo, LineIcon
   layouts/          Base (meta, nawigacja, stopka), LegalLayout (dokumenty ze spisem treści)
-  data/             company.ts, inquiry-options.ts, logo-mark.ts - jedno źródło danych i znaku logo
-  lib/              inquiry-schema.ts - walidacja zod po stronie serwera
+  data/             company.ts, inquiry-options.ts, logo-mark.ts - jedno źródło danych i znaku logo,
+                    offer.ts, routes.ts, seasons.ts, faq.ts - treść oferty, tras, kalendarza sezonu i FAQ,
+                    assistant-answers.ts - baza odpowiedzi asystenta
+  lib/              inquiry-schema.ts - walidacja zod, assistant.ts - model lokalny i dopasowanie pytań,
+                    env.ts, rate-limit.ts
   scripts/          motion.ts (GSAP, Lenis, kotwice), reveal.ts (odsłanianie i paralaksa)
   styles/           tokens.css (kolory, typografia, odstępy), global.css
   assets/photos/    zdjęcia źródłowe, optymalizowane przy buildzie
 public/             favicon, apple-touch-icon, og-image.jpg, robots.txt
 scripts/            brand-assets.mjs, strip-image-metadata.mjs
-tests/e2e/          formularz, API, strony i SEO, nawigacja
+tests/e2e/          formularz, API, strony i SEO, nawigacja, trasy, sezon, FAQ i asystent
+tests/eval/         pytania kontrolne jakości odpowiedzi asystenta
+models/             model asystenta pobierany przez npm run assistant:model (poza repozytorium)
 docs/
   api-documentation.pdf / .html   dokumentacja endpointu
   screenshots/                    zrzuty ekranu używane w README
@@ -194,7 +245,10 @@ docs/
 - Pułapka na boty (`website`): bot dostaje `200`, a zapytanie nie jest przetwarzane.
 - E-mail do brokera jest zwykłym tekstem, bez HTML z danych klienta. Odpowiedzi API nie zawierają szczegółów
   błędów ani stack trace.
-- Klucz Resend tylko w `.env` na serwerze. Do przeglądarki nie trafia żaden sekret.
+- Klucz Resend tylko w `.env` na serwerze. Do przeglądarki nie trafia żaden sekret, baza odpowiedzi ani model,
+  co sprawdza test e2e.
+- Asystent: pytania przetwarzane wyłącznie na serwerze, odpowiedź renderowana jako tekst (`textContent`), w logach
+  tylko rodzaj odpowiedzi, bez treści pytań. Limit 20 pytań na 10 minut z jednego IP chroni procesor.
 - Zdjęcia nie mają metadanych (EXIF, XMP, C2PA). Pliki agentów AI, klucze i certyfikaty są w `.gitignore`.
 
 Do zrobienia przy wdrożeniu: nagłówki bezpieczeństwa (CSP, HSTS, `Referrer-Policy`, `Permissions-Policy`,

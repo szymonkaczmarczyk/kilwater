@@ -1,0 +1,390 @@
+---
+import { seasonLevels, seasonMonths, seasons, type SeasonLevel } from "../data/seasons";
+
+const levelOrder: SeasonLevel[] = ["best", "peak", "good", "cool"];
+const initial = { destination: 0, month: 2 };
+const initialSeason = seasons[initial.destination];
+const initialMonth = seasonMonths[initial.month];
+const initialLevel = initialSeason.levels[initial.month] as SeasonLevel;
+---
+
+<section class="season" id="kiedy-plynac" aria-labelledby="season-title" data-season>
+  <div class="season__inner">
+    <header class="season__head">
+      <p class="label">Kiedy płynąć</p>
+      <h2 id="season-title" class="section-title">Kalendarz sezonu<br />na każdym akwenie</h2>
+      <p class="section-lead">
+        Wybierz akwen i miesiąc, żeby zobaczyć, czego się spodziewać na wodzie. To nasza podpowiedź na podstawie typowej pogody, a nie prognoza.
+      </p>
+    </header>
+
+    <div class="season__layout">
+      <div class="season__matrix">
+        <table class="season__table">
+          <caption class="season__caption">Kalendarz sezonu: akweny i miesiące od kwietnia do października</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="season__corner">Akwen</th>
+              {seasonMonths.map((month) => (
+                <th scope="col" class="season__month"><abbr title={month.name}>{month.short}</abbr></th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {seasons.map((season, destinationIndex) => (
+              <tr>
+                <th scope="row" class="season__place">{season.name}</th>
+                {season.levels.map((level, monthIndex) => (
+                  <td>
+                    <button
+                      class:list={["season__cell", `season__cell--${level}`]}
+                      type="button"
+                      aria-pressed={destinationIndex === initial.destination && monthIndex === initial.month ? "true" : "false"}
+                      aria-label={`${season.name}, ${seasonMonths[monthIndex].name}: ${seasonLevels[level as SeasonLevel].label}`}
+                      data-season-cell
+                      data-destination={destinationIndex}
+                      data-month={monthIndex}
+                    ></button>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <ul class="season__legend" aria-label="Legenda">
+          {levelOrder.map((level) => (
+            <li><span class:list={["season__swatch", `season__cell--${level}`]} aria-hidden="true"></span>{seasonLevels[level].label}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="season__detail" aria-live="polite" data-season-detail>
+        <p class="season__detail-label" data-season-label>{seasonLevels[initialLevel].label}</p>
+        <h3 class="season__detail-title" data-season-title>{initialSeason.name} {initialMonth.inName}</h3>
+        <p class="season__detail-text" data-season-text>{seasonLevels[initialLevel].text}</p>
+        <dl class="season__facts">
+          <div>
+            <dt>Wiatr</dt>
+            <dd data-season-wind>{initialSeason.wind}</dd>
+          </div>
+          <div>
+            <dt>Woda</dt>
+            <dd data-season-water>{initialSeason.water}</dd>
+          </div>
+        </dl>
+        <a
+          class="button button--solid season__cta"
+          href={`/?akwen=${initialSeason.destination}&miesiac=${initialMonth.number}#zapytanie`}
+          data-season-cta
+        >
+          <span data-season-cta-label>Zapytaj o {initialMonth.name}</span>
+          <span class="button__arrow" aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { seasonLevels, seasonMonths, seasons, type SeasonLevel } from "../data/seasons";
+
+  const section = document.querySelector<HTMLElement>("[data-season]");
+  const cells = section ? [...section.querySelectorAll<HTMLButtonElement>("[data-season-cell]")] : [];
+  const field = (name: string) => section?.querySelector<HTMLElement>(`[data-season-${name}]`);
+  const cta = section?.querySelector<HTMLAnchorElement>("[data-season-cta]");
+  const detail = section?.querySelector<HTMLElement>("[data-season-detail]");
+
+  const showDetail = (cell: HTMLButtonElement) => {
+    const season = seasons[Number(cell.dataset.destination)];
+    const month = seasonMonths[Number(cell.dataset.month)];
+    const level = seasonLevels[season.levels[Number(cell.dataset.month)] as SeasonLevel];
+    cells.forEach((other) => other.setAttribute("aria-pressed", String(other === cell)));
+    field("label")!.textContent = level.label;
+    field("title")!.textContent = `${season.name} ${month.inName}`;
+    field("text")!.textContent = level.text;
+    field("wind")!.textContent = season.wind;
+    field("water")!.textContent = season.water;
+    field("cta-label")!.textContent = `Zapytaj o ${month.name}`;
+    if (cta) cta.href = `/?akwen=${season.destination}&miesiac=${month.number}#zapytanie`;
+    detail?.classList.remove("is-changing");
+    void detail?.offsetWidth;
+    detail?.classList.add("is-changing");
+  };
+
+  cells.forEach((cell) => cell.addEventListener("click", () => showDetail(cell)));
+</script>
+
+<style>
+  .season {
+    position: relative;
+    background: var(--surface-page);
+    padding: var(--space-9) var(--gutter);
+  }
+
+  .season__inner {
+    max-width: var(--page-max);
+    margin: 0 auto;
+  }
+
+  .season__head {
+    display: grid;
+    gap: var(--space-5);
+    margin-bottom: var(--space-7);
+  }
+
+  .season__head .label {
+    color: var(--text-muted);
+  }
+
+  .season__layout {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  .season__matrix {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .season__table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: var(--space-1);
+    table-layout: fixed;
+  }
+
+  .season__caption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .season__corner,
+  .season__month {
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .season__corner {
+    width: 104px;
+    text-align: left;
+  }
+
+  .season__month {
+    text-align: center;
+  }
+
+  .season__month abbr {
+    text-decoration: none;
+  }
+
+  .season__table td {
+    padding: 0;
+  }
+
+  .season__place {
+    font-family: var(--font-display);
+    font-size: var(--size-small);
+    font-weight: var(--weight-regular);
+    letter-spacing: var(--tracking-display-caps);
+    text-align: left;
+    text-transform: uppercase;
+    padding-right: var(--space-2);
+  }
+
+  .season__cell {
+    display: block;
+    width: 100%;
+    height: var(--hit-target);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition:
+      transform var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out);
+  }
+
+  .season__cell--best {
+    background: var(--accent);
+  }
+
+  .season__cell--peak {
+    background: var(--surface-deep);
+  }
+
+  .season__cell--good {
+    background: color-mix(in srgb, var(--accent) 38%, var(--surface-page));
+  }
+
+  .season__cell--cool {
+    background: transparent;
+    border-color: var(--line-soft);
+    background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--line-soft) 6px 7px);
+  }
+
+  .season__cell[aria-pressed="true"] {
+    box-shadow:
+      0 0 0 2px var(--surface-page),
+      0 0 0 3px var(--text-strong);
+  }
+
+  .season__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-5);
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--size-small);
+    color: var(--text-muted);
+  }
+
+  .season__legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .season__swatch {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+  }
+
+  .season__detail {
+    display: grid;
+    align-content: start;
+    gap: var(--space-4);
+    padding: var(--space-6);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+  }
+
+  .season__detail.is-changing > * {
+    animation: season-detail-in 500ms var(--ease-out) both;
+  }
+
+  .season__detail-label {
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .season__detail-title {
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.02em;
+  }
+
+  .season__detail-text {
+    color: var(--text-muted);
+  }
+
+  .season__facts {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .season__facts dt {
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .season__facts dd {
+    margin: var(--space-1) 0 0;
+    font-size: var(--size-small);
+  }
+
+  .season__cta {
+    justify-self: start;
+    margin-top: var(--space-2);
+  }
+
+  @keyframes season-detail-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  @media (hover: hover) {
+    .season__cell:hover {
+      transform: scaleY(1.08);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .season__table {
+      border-spacing: var(--space-2);
+    }
+
+    .season__corner {
+      width: 140px;
+    }
+
+    .season__month {
+      font-size: var(--size-small);
+    }
+
+    .season__cell {
+      height: 56px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .season {
+      padding-block: var(--space-10);
+    }
+
+    .season__head {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+      align-items: end;
+      margin-bottom: var(--space-8);
+    }
+
+    .season__head .label {
+      grid-column: 1 / -1;
+    }
+
+    .season__head .section-title {
+      grid-column: 1 / span 7;
+    }
+
+    .season__head .section-lead {
+      grid-column: 9 / span 4;
+    }
+
+    .season__layout {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+      align-items: start;
+    }
+
+    .season__matrix {
+      grid-column: 1 / span 7;
+    }
+
+    .season__detail {
+      grid-column: 9 / span 4;
+    }
+  }
+</style>

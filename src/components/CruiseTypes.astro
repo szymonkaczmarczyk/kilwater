@@ -3,36 +3,27 @@ import { Picture } from "astro:assets";
 import crewImage from "../assets/photos/zaloga.jpg";
 import skipperImage from "../assets/photos/skipper.webp";
 import friendsImage from "../assets/photos/przyjaciele.webp";
+import { cruiseTypeTexts } from "../data/offer";
 
-const cruiseTypes = [
+const cruiseTypeMedia = [
   {
-    name: "Z pełną załogą",
-    text: "Skipper prowadzi jacht, hostessa dba o kabiny, kucharz o stół. Ty wybierasz tylko zatokę na kolejny dzień i godzinę kąpieli.",
-    audience: "Dla rodzin, firm i wyjazdów z okazji",
-    included: ["Skipper, hostessa i kucharz", "Trasa ułożona pod pogodę", "Pełne wyżywienie na pokładzie"],
     image: crewImage,
     alt: "Członek załogi w lnianym mundurze podaje śniadanie z figami, brzoskwiniami i rogalikami na tekowym stole jachtu",
     focus: "45% 60%",
   },
   {
-    name: "Ze skipperem",
-    text: "Doświadczony skipper prowadzi jacht i zna lokalne kotwicowiska. Gotujecie sami albo jecie w portowych tawernach, a na wodzie uczycie się tyle, ile chcecie.",
-    audience: "Dla grup bez patentu i na pierwszy rejs",
-    included: ["Skipper na cały rejs", "Pomoc przy manewrach i nauka", "Trasa i rezerwacje miejsc w marinach"],
     image: skipperImage,
     alt: "Opalone dłonie skippera na drewnianym kole sterowym jachtu, obok mosiężny kompas, w tle rozmyte morze",
     focus: "50% 55%",
   },
   {
-    name: "Bez załogi",
-    text: "Bierzesz jacht na własne uprawnienia i płyniesz, gdzie chcesz. My sprawdzamy jacht, dokumenty i odprawę, żebyś w dniu odbioru po prostu wypłynął.",
-    audience: "Dla żeglarzy z uprawnieniami wymaganymi w danym kraju",
-    included: ["Sprawdzony jacht i odprawa", "Dokumenty i lista załogi", "Pomoc na wodzie przez telefon"],
     image: friendsImage,
     alt: "Czworo przyjaciół siedzi na dziobie jachtu pod białymi żaglami i patrzy na skaliste wyspy w zachodzącym słońcu",
     focus: "45% 50%",
   },
 ];
+
+const cruiseTypes = cruiseTypeTexts.map((cruiseType, index) => ({ ...cruiseType, ...cruiseTypeMedia[index] }));
 ---
 
 <section class="cruises" id="rejsy" aria-labelledby="cruises-title" data-cruises>

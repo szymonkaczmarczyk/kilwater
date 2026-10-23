@@ -1,27 +1,19 @@
 import type { APIRoute } from "astro";
 import { fieldErrors, inquirySchema, type Inquiry } from "../../lib/inquiry-schema";
 import { cruiseOptions, destinationOptions, extraOptions, nightOptions } from "../../data/inquiry-options";
+import { readEnv } from "../../lib/env";
+import { createRateLimiter } from "../../lib/rate-limit";
 
 export const prerender = false;
 
 const maxBodyBytes = 10_000;
-const rateWindowMs = 10 * 60 * 1000;
-const rateLimit = 5;
-const recentRequests = new Map<string, number[]>();
+const isRateLimited = createRateLimiter(5, 10 * 60 * 1000);
 
 const json = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), {
     status,
     headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
-
-const isRateLimited = (clientKey: string) => {
-  const now = Date.now();
-  const timestamps = (recentRequests.get(clientKey) ?? []).filter((time) => now - time < rateWindowMs);
-  timestamps.push(now);
-  recentRequests.set(clientKey, timestamps);
-  return timestamps.length > rateLimit;
-};
 
 const labelOf = (options: readonly { value: string; label: string }[], value: string) =>
   options.find((option) => option.value === value)?.label ?? value;
@@ -41,8 +33,6 @@ const inquiryText = (inquiry: Inquiry) =>
     "",
     `Wiadomość: ${inquiry.message || "brak"}`,
   ].join("\n");
-
-const readEnv = (key: string): string | undefined => process.env[key] ?? import.meta.env[key];
 
 const deliverInquiry = async (inquiry: Inquiry) => {
   const apiKey = readEnv("RESEND_API_KEY");

@@ -118,7 +118,8 @@
 
 <h1>Kilwater API - dokumentacja</h1>
 <p class="lead">
-  Endpoint publiczny: <code>POST /api/zapytanie</code> (formularz zapytania o rejs)<br>
+  Endpointy publiczne: <code>POST /api/zapytanie</code> (formularz zapytania o rejs),
+  <code>POST /api/asystent</code> (asystent pytań w sekcji FAQ)<br>
   Pliki pomocnicze: <code>/sitemap.xml</code>, <code>/robots.txt</code>
 </p>
 <pre>https://kilwater.com
@@ -133,6 +134,9 @@ http://localhost:4520   (lokalnie, npm run dev)</pre>
   <li><a href="#responses">Odpowiedzi</a></li>
   <li><a href="#client">Wysyłka z własnej strony</a></li>
   <li><a href="#delivery">Dostarczanie zapytań</a></li>
+  <li><a href="#assistant">POST /api/asystent</a></li>
+  <li><a href="#assistant-responses">Odpowiedzi asystenta</a></li>
+  <li><a href="#assistant-model">Jak asystent dobiera odpowiedź</a></li>
   <li><a href="#sitemap">GET /sitemap.xml i robots.txt</a></li>
   <li><a href="#privacy">Dane osobowe</a></li>
   <li><a href="#checklist">Lista kontrolna przed wdrożeniem</a></li>
@@ -142,9 +146,10 @@ http://localhost:4520   (lokalnie, npm run dev)</pre>
 <section id="auth">
   <h2>Autoryzacja i limity</h2>
   <p>
-    API nie wymaga kluczy, ciasteczek ani sesji. Jedyny endpoint, <code>POST /api/zapytanie</code>, przyjmuje
-    zapytania z formularza na stronie głównej i z dowolnego innego źródła, które wyśle poprawny JSON.
-    Ochronę przed nadużyciami zapewniają limity i walidacja opisane niżej.
+    API nie wymaga kluczy, ciasteczek ani sesji. <code>POST /api/zapytanie</code> przyjmuje zapytania z formularza
+    na stronie głównej i z dowolnego innego źródła, które wyśle poprawny JSON. Ochronę przed nadużyciami zapewniają
+    limity i walidacja opisane niżej. Asystent (<code>/api/asystent</code>) ma własne, łagodniejsze limity opisane
+    w jego sekcji.
   </p>
   <table>
     <thead><tr><th>Zabezpieczenie</th><th>Opis</th></tr></thead>
@@ -188,13 +193,14 @@ http://localhost:4520   (lokalnie, npm run dev)</pre>
 <pre>{"ok": false, "errors": {"email": "Podaj poprawny adres e-mail, np. jan@przyklad.pl."}}</pre>
   <table class="break">
     <thead><tr><th>Kod</th><th>Kiedy</th></tr></thead>
-    <tr><td><code>200</code></td><td>Zapytanie przyjęte i wysłane (albo zapisane w logu w trybie testowym).</td></tr>
+    <tr><td><code>200</code></td><td>Zapytanie przyjęte i wysłane (albo zapisane w logu w trybie testowym). Asystent zwraca <code>200</code> przy każdej odpowiedzi, także „nie znam odpowiedzi”.</td></tr>
+    <tr><td><code>204</code></td><td><code>GET /api/asystent</code>: serwer zaczął wczytywać model asystenta.</td></tr>
     <tr><td><code>400</code></td><td>Treść nie jest poprawnym JSON-em (<code>{"ok": false}</code>) albo walidacja nie przeszła (<code>errors</code> z kluczem = nazwa pola).</td></tr>
-    <tr><td><code>404</code></td><td>Inna metoda niż <code>POST</code>, np. <code>GET /api/zapytanie</code>.</td></tr>
+    <tr><td><code>404</code></td><td>Nieobsługiwana metoda, np. <code>GET /api/zapytanie</code>.</td></tr>
     <tr><td><code>413</code></td><td>Treść żądania większa niż 10 000 bajtów.</td></tr>
     <tr><td><code>415</code></td><td>Nagłówek <code>Content-Type</code> inny niż <code>application/json</code>.</td></tr>
-    <tr><td><code>429</code></td><td>Przekroczony limit 5 żądań na 10 minut z jednego IP.</td></tr>
-    <tr><td><code>503</code></td><td>Wysyłka e-mail nie jest skonfigurowana na produkcji albo dostawca poczty zwrócił błąd. Szczegóły tylko w logu serwera.</td></tr>
+    <tr><td><code>429</code></td><td>Przekroczony limit z jednego IP: 5 zapytań albo 20 pytań do asystenta na 10 minut.</td></tr>
+    <tr><td><code>503</code></td><td>Wysyłka e-mail nie jest skonfigurowana na produkcji, dostawca poczty zwrócił błąd albo na serwerze brakuje modelu asystenta. Szczegóły tylko w logu serwera.</td></tr>
   </table>
 </section>
 
@@ -388,6 +394,123 @@ Wiadomość: Pierwszy rejs, dwoje dzieci.</pre>
   </table>
 </section>
 
+<section id="assistant">
+  <h2>POST /api/asystent</h2>
+  <div class="endpoint">
+    <div class="endpoint__line"><span class="badge badge--post">POST</span><code>/api/asystent</code></div>
+    <p>Odpowiada na pytanie o rejs gotowym tekstem z bazy wiedzy Kilwater. Działa w całości na serwerze strony, przez lokalny model, bez zewnętrznego API i bez opłat za pytania. Gdy w bazie nie ma odpowiedzi, kieruje na <code>kontakt@kilwater.com</code>.</p>
+  </div>
+  <div class="endpoint">
+    <div class="endpoint__line"><span class="badge badge--get">GET</span><code>/api/asystent</code></div>
+    <p>Bez parametrów. Zaczyna wczytywać model w tle i od razu zwraca <code>204</code> bez treści. Strona wysyła to żądanie, gdy sekcja FAQ zbliża się do ekranu, żeby pierwsze pytanie nie czekało na model.</p>
+  </div>
+  <h4>Treść żądania (JSON)</h4>
+  <table>
+    <thead><tr><th>Parametr</th><th>Wymagany</th><th>Opis</th></tr></thead>
+    <tr><td><code>question</code></td><td>tak</td><td>Pytanie, od 3 do 300 znaków. Serwer zamienia ciągi spacji i nowe linie na jedną spację i obcina spacje na brzegach.</td></tr>
+    <tr><td><code>website</code></td><td>nie</td><td>Pułapka na boty, zawsze puste. Wypełnione daje odpowiedź <code>unknown</code> bez przetwarzania pytania.</td></tr>
+  </table>
+  <h4>Przykład żądania (curl)</h4>
+<pre>curl -X POST https://kilwater.com/api/asystent \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"czy na jacht wejdzie mój labrador","website":""}'</pre>
+  <h4>Limity i kolejność sprawdzania</h4>
+  <table>
+    <thead><tr><th>Krok</th><th>Odpowiedź przy błędzie</th></tr></thead>
+    <tr><td>1. Nagłówek <code>Content-Type: application/json</code></td><td><code>415</code> i <code>{"ok": false}</code></td></tr>
+    <tr><td>2. Treść do 2000 bajtów</td><td><code>413</code> i <code>{"ok": false}</code></td></tr>
+    <tr><td>3. Limit 20 pytań na 10 minut z jednego IP (zmienna <code>ASSISTANT_RATE_LIMIT</code>)</td><td><code>429</code> i <code>"reason": "rate_limited"</code></td></tr>
+    <tr><td>4. Poprawny JSON, tylko pola <code>question</code> i <code>website</code></td><td><code>400</code> z polem <code>error</code></td></tr>
+    <tr><td>5. Filtr danych kontaktowych i linków</td><td><code>200</code> z <code>"kind": "blocked"</code>, pytanie nie trafia do modelu</td></tr>
+    <tr><td>6. Model dostępny na serwerze</td><td><code>503</code> i <code>"reason": "unavailable"</code></td></tr>
+  </table>
+  <p class="note">Limit asystenta jest wyższy niż formularza, bo pytanie nic nie kosztuje. Chroni tylko procesor serwera przed zalaniem żądaniami.</p>
+</section>
+
+<section id="assistant-responses">
+  <h2>Odpowiedzi asystenta</h2>
+  <h4>Odpowiedź - znaleziona w bazie (200, <code>answer</code>)</h4>
+<pre>{
+  "ok": true,
+  "kind": "answer",
+  "text": "Najlepszy czas w Grecji to czerwiec i wrzesień, a szczyt sezonu przypada
+           na lipiec i sierpień. W lipcu i sierpniu na Cykladach wieje silne meltemi…",
+  "link": { "href": "/#kiedy-plynac", "label": "Zobacz kalendarz sezonu" },
+  "matchedQuestion": "Kiedy wieje meltemi?",
+  "related": []
+}</pre>
+  <h4>Odpowiedź - brak pewności (200, <code>unsure</code>)</h4>
+<pre>{
+  "ok": true,
+  "kind": "unsure",
+  "text": "Nie mam pewnej odpowiedzi. Sprawdź podobne pytania poniżej albo napisz na kontakt@kilwater.com.",
+  "related": ["Co to jest rejs ze skipperem?", "Jakie jachty macie?", "Kto jest w załodze jachtu?"]
+}</pre>
+  <h4>Odpowiedź - poza bazą (200, <code>unknown</code>) i filtr (200, <code>blocked</code>)</h4>
+<pre>{"ok": true, "kind": "unknown", "related": [],
+ "text": "Nie znam odpowiedzi na to pytanie. Napisz do nas na kontakt@kilwater.com, a broker odpowie osobiście."}
+
+{"ok": true, "kind": "blocked", "related": [],
+ "text": "Nie wpisuj tu danych kontaktowych. Jeśli broker ma się do Ciebie odezwać, wyślij formularz zapytania niżej na stronie."}</pre>
+  <h4>Odpowiedź - błędy (400, 429, 503)</h4>
+<pre>{"ok": false, "error": "Wpisz pytanie, co najmniej 3 znaki."}
+{"ok": false, "error": "To pole nie jest obsługiwane."}
+{"ok": false, "reason": "rate_limited"}
+{"ok": false, "reason": "unavailable"}</pre>
+  <div class="keep">
+  <h4>Znaczenie kluczy w odpowiedzi</h4>
+  </div>
+  <table>
+    <thead><tr><th>Klucz</th><th>Opis</th></tr></thead>
+    <tr><td><code>ok</code></td><td><code>true</code> przy każdej odpowiedzi asystenta, także <code>unknown</code> i <code>blocked</code>. <code>false</code> tylko przy błędzie żądania.</td></tr>
+    <tr><td><code>kind</code></td><td>Rodzaj odpowiedzi, patrz tabela niżej.</td></tr>
+    <tr><td><code>text</code></td><td>Tekst do pokazania użytkownikowi. Zawsze gotowy tekst z bazy albo stały komunikat, nigdy zdanie wygenerowane przez model.</td></tr>
+    <tr><td><code>link</code></td><td>Opcjonalny. <code>href</code> i <code>label</code> przycisku pod odpowiedzią, np. do formularza albo kalendarza sezonu.</td></tr>
+    <tr><td><code>matchedQuestion</code></td><td>Tylko przy <code>answer</code>. Pytanie z bazy, do którego dopasowano pytanie użytkownika. Strona pokazuje je, gdy różni się od wpisanego.</td></tr>
+    <tr><td><code>related</code></td><td>Lista pytań z bazy do kliknięcia. Przy <code>answer</code> inne mocno pasujące tematy, przy <code>unsure</code> najbliższe pytania. Kliknięcie wysyła to pytanie jeszcze raz.</td></tr>
+    <tr><td><code>error</code></td><td>Tylko przy <code>400</code>. Komunikat po polsku, co poprawić.</td></tr>
+    <tr><td><code>reason</code></td><td>Tylko przy <code>429</code> i <code>503</code>: <code>rate_limited</code> albo <code>unavailable</code>.</td></tr>
+  </table>
+  <div class="keep">
+  <h4>Wartości <code>kind</code></h4>
+  <table>
+    <thead><tr><th>Wartość</th><th>Kiedy</th><th>Co pokazuje strona</th></tr></thead>
+    <tr><td><code>answer</code></td><td>Pytanie wyraźnie pasuje do pytania z bazy.</td><td>Tekst, ewentualny przycisk z <code>link</code> i podobne pytania.</td></tr>
+    <tr><td><code>unsure</code></td><td>Kilka pytań z bazy pasuje podobnie słabo.</td><td>Komunikat, przycisk e-mail i pytania z <code>related</code>.</td></tr>
+    <tr><td><code>unknown</code></td><td>Nic w bazie nie pasuje, np. pytanie spoza tematu.</td><td>Komunikat i przycisk e-mail z wpisanym pytaniem.</td></tr>
+    <tr><td><code>blocked</code></td><td>W pytaniu jest e-mail, numer telefonu albo link.</td><td>Komunikat z prośbą o usunięcie danych albo opisanie pytania słowami.</td></tr>
+  </table>
+  </div>
+</section>
+
+<section id="assistant-model">
+  <div class="keep">
+  <h2>Jak asystent dobiera odpowiedź</h2>
+  <p>Asystent nie pisze własnych zdań. Lokalny model zamienia pytanie na wektor znaczenia i porównuje go z każdym sformułowaniem w bazie, a serwer pokazuje odpowiedź przypisaną do najbliższego. Dlatego nie da się go użyć do tematów spoza rejsów.</p>
+  </div>
+  <table>
+    <thead><tr><th>Element</th><th>Opis</th></tr></thead>
+    <tr><td>Model</td><td><code>Xenova/bge-m3</code> (licencja MIT, ok. 560 MB) przez <code>@huggingface/transformers</code> i ONNX Runtime. Działa na procesorze, bez karty graficznej.</td></tr>
+    <tr><td>Baza wiedzy</td><td><code>src/data/assistant-answers.ts</code>: 40 odpowiedzi i 233 sformułowania pytań. FAQ ze strony z typowymi sformułowaniami (<code>alsoAsked</code> w <code>faq.ts</code>) oraz odpowiedzi składane z danych strony: akweny, sezon, trasy, rodzaje rejsów, załoga, dodatki, kontakt.</td></tr>
+    <tr><td>Pewna odpowiedź</td><td>Podobieństwo co najmniej 0,80 albo co najmniej 0,70 z przewagą 0,04 nad drugą odpowiedzią.</td></tr>
+    <tr><td>Brak pewności</td><td>Inaczej, ale są pytania z podobieństwem od 0,64. Pokazuje do trzech takich pytań.</td></tr>
+    <tr><td>Brak odpowiedzi</td><td>Wszystkie podobieństwa poniżej 0,64. W pomiarze pytania spoza tematu dostawały najwyżej 0,62.</td></tr>
+    <tr><td>Wydajność</td><td>Wczytanie modelu po starcie serwera trwa kilka sekund, kolejne odpowiedzi kilkadziesiąt milisekund. Proces z modelem zajmuje ok. 1 GB RAM.</td></tr>
+  </table>
+  <h4>Wdrożenie modelu</h4>
+<pre>npm install
+npm run assistant:model   # pobiera model do ./models (raz, ok. 560 MB)
+npm run build
+HOST=0.0.0.0 PORT=8080 node ./dist/server/entry.mjs   # start z katalogu projektu</pre>
+  <p>Folder <code>models/</code> jest w <code>.gitignore</code>. W działaniu serwer nie pobiera niczego z internetu (<code>allowRemoteModels = false</code>), więc bez kroku <code>assistant:model</code> asystent odpowiada <code>503</code>.</p>
+  <h4>Jak nauczyć asystenta nowego pytania</h4>
+  <ol>
+    <li>Gdy pytanie pasuje do istniejącej odpowiedzi, dopisz nowe sformułowanie do <code>alsoAsked</code> w <code>faq.ts</code> albo do <code>questions</code> w <code>assistant-answers.ts</code>.</li>
+    <li>Gdy to nowy temat, dodaj wpis z <code>id</code>, kilkoma sformułowaniami, odpowiedzią opartą na danych firmy i opcjonalnym <code>link</code>. Nie wpisuj cen ani obietnic, których nie potwierdził właściciel.</li>
+    <li>Uruchom <code>npm run assistant:eval</code>. Zestaw 48 pytań kontrolnych sprawdza parafrazy, pytania bliskie tematu bez odpowiedzi, pytania spoza tematu i filtr danych kontaktowych.</li>
+  </ol>
+</section>
+
 <section id="sitemap">
   <h2>GET /sitemap.xml i robots.txt</h2>
   <div class="endpoint">
@@ -417,24 +540,24 @@ Sitemap: https://kilwater.com/sitemap.xml</pre>
     <thead><tr><th>Dane</th><th>Gdzie trafiają</th><th>Jak długo</th></tr></thead>
     <tr><td>Wszystkie pola formularza</td><td>E-mail do brokera, wysłany przez Resend jako pośrednika. Serwer strony niczego nie zapisuje w bazie ani na dysku.</td><td>Zgodnie z polityką prywatności.</td></tr>
     <tr><td>Adres IP</td><td>Pamięć procesu serwera, tylko do liczenia limitu żądań.</td><td>Do 10 minut, znika też przy restarcie serwera.</td></tr>
+    <tr><td>Treść pytania do asystenta</td><td>Tylko pamięć procesu serwera na czas dopasowania odpowiedzi. Nie trafia do firm zewnętrznych, a log zapisuje wyłącznie rodzaj odpowiedzi.</td><td>Nie jest przechowywana.</td></tr>
     <tr><td>Pełna treść zapytania w logu</td><td>Log serwera, tylko w <code>npm run dev</code> i przy <code>INQUIRY_DRY_RUN=1</code>.</td><td>Do wyczyszczenia logu.</td></tr>
     <tr><td>Dane w przeglądarce</td><td>Formularz nie zapisuje ciasteczek ani <code>localStorage</code>.</td><td>Brak przechowywania.</td></tr>
   </table>
   <h4>Zasady dla integracji</h4>
   <ul>
-    <li>Wysyłaj zapytanie tylko po akceptacji regulaminu przez klienta, czyli z <code>consent: true</code> ustawionym przez niego, a nie automatycznie.</li>
-    <li>Nie dopisuj do wiadomości danych, których klient sam nie podał, np. z systemu CRM.</li>
-    <li>Informacje o zdrowiu, np. alergie przy wyżywieniu, przekazuj tylko wtedy, gdy klient sam je wpisał.</li>
-    <li>Nie zapisuj odpowiedzi API z danymi klienta w logach własnej aplikacji. Odpowiedź zawiera tylko <code>ok</code> i ewentualne komunikaty błędów.</li>
+    <li>Wysyłaj zapytanie tylko z <code>consent: true</code> zaznaczonym przez klienta, nigdy automatycznie.</li>
+    <li>Nie dopisuj danych, których klient sam nie podał, np. z systemu CRM.</li>
+    <li>Informacje o zdrowiu, np. alergie, przekazuj tylko wtedy, gdy klient sam je wpisał.</li>
+    <li>Nie zapisuj w logach własnej aplikacji treści zapytań ani pytań do asystenta.</li>
   </ul>
   <h4>Prośby klientów o ich dane</h4>
-  <p>Serwer strony nie przechowuje zapytań, więc każdą prośbę obsługuje się w skrzynce brokera:</p>
+  <p>Serwer strony nie przechowuje zapytań, więc prośby obsługuje się w skrzynce brokera, w ciągu miesiąca (art. 12 ust. 3 RODO):</p>
   <table>
     <thead><tr><th>Prośba</th><th>Co zrobić</th></tr></thead>
     <tr><td>Dostęp do danych</td><td>Wyszukaj w skrzynce wiadomości z adresem klienta w Reply-To i prześlij mu ich treść.</td></tr>
     <tr><td>Usunięcie danych</td><td>Usuń te wiadomości ze skrzynki i z kosza, a potem potwierdź usunięcie klientowi.</td></tr>
     <tr><td>Sprostowanie</td><td>Odpowiedz na wiadomość z poprawionymi danymi, żeby historia zawierała aktualną wersję.</td></tr>
-    <tr><td>Termin odpowiedzi</td><td>Do miesiąca od otrzymania prośby (art. 12 ust. 3 RODO).</td></tr>
   </table>
 </section>
 
@@ -451,11 +574,14 @@ Sitemap: https://kilwater.com/sitemap.xml</pre>
     <tr><td>Prawdziwy adres IP klienta</td><td>Za reverse proxy serwer musi widzieć adres klienta, inaczej wszyscy dzielą jeden limit 5 żądań.</td></tr>
     <tr><td>Nagłówki bezpieczeństwa</td><td>Hosting ustawia CSP, HSTS, <code>Referrer-Policy</code>, <code>Permissions-Policy</code> i <code>frame-ancestors</code>.</td></tr>
     <tr><td>Ochrona przed botami</td><td>Przy większym ruchu dodaj Cloudflare Turnstile do formularza i sprawdzanie tokenu w endpoincie.</td></tr>
+    <tr><td>Model asystenta na serwerze</td><td>Po <code>npm run assistant:model</code> pytanie w sekcji FAQ dostaje odpowiedź, a nie komunikat o niedostępności. Serwer ma co najmniej 2 GB RAM.</td></tr>
+    <tr><td>Pytania kontrolne asystenta</td><td><code>npm run assistant:eval</code> przechodzi w całości po każdej zmianie bazy odpowiedzi, przed wdrożeniem.</td></tr>
+    <tr><td>Rozgrzany asystent po starcie</td><td>Skrypt startowy albo healthcheck wysyła <code>GET /api/asystent</code> i dostaje <code>204</code>, więc pierwszy klient nie czeka na wczytanie modelu.</td></tr>
     <tr><td>Adres strony</td><td><code>site</code> w <code>astro.config.mjs</code> wskazuje docelową domenę, a <code>/sitemap.xml</code> zwraca właściwe adresy.</td></tr>
   </table>
 </section>
 
-<section id="troubleshooting">
+<section id="troubleshooting" class="break">
   <div class="keep">
   <h2>Rozwiązywanie problemów</h2>
   <p>Najczęstsze objawy po wdrożeniu i ich przyczyny. Szczegóły błędów wysyłki są zawsze w logu serwera, nigdy w odpowiedzi API.</p>
@@ -466,6 +592,10 @@ Sitemap: https://kilwater.com/sitemap.xml</pre>
     <tr><td>Klienci szybko dostają <code>429</code></td><td>Serwer stoi za reverse proxy i widzi jeden adres IP dla wszystkich. Przekaż adres klienta z proxy do serwera, żeby limit liczył się osobno dla każdego.</td></tr>
     <tr><td>Maile z zapytaniami trafiają do spamu</td><td>Domena nadawcy nie ma rekordów SPF i DKIM z panelu Resend. Dodaj je w DNS i poczekaj na status „Verified”.</td></tr>
     <tr><td>Data wypłynięcia „w przeszłości” dla dzisiejszej daty</td><td>Serwer porównuje daty w UTC, więc tuż po północy czasu polskiego dzisiejsza data bywa dla niego jeszcze jutrem.</td></tr>
+    <tr><td>Asystent zawsze odpowiada „chwilowo niedostępny”</td><td>Brak modelu w <code>./models</code> albo serwer uruchomiony z innego katalogu. Log pokazuje <code>model nie jest dostępny</code>. Uruchom <code>npm run assistant:model</code> i startuj serwer z katalogu projektu.</td></tr>
+    <tr><td>Pierwsza odpowiedź asystenta trwa kilka sekund</td><td>Po starcie serwera model wczytuje się do pamięci. Strona robi to z wyprzedzeniem przez <code>GET /api/asystent</code>, a po wdrożeniu można wysłać to żądanie od razu, np. w skrypcie startowym.</td></tr>
+    <tr><td>Serwer restartuje się po pierwszym pytaniu do asystenta</td><td>Za mało pamięci: proces z modelem potrzebuje ok. 1 GB RAM. Wybierz serwer z co najmniej 2 GB albo zwiększ limit pamięci kontenera.</td></tr>
+    <tr><td>Asystent daje odpowiedź na inny temat</td><td>Pytanie jest blisko tematu, a w bazie brakuje pasującego sformułowania. Dopisz je do bazy i uruchom <code>npm run assistant:eval</code>.</td></tr>
     <tr><td>Formularz pokazuje „Brak połączenia z internetem”</td><td>Żądanie nie dotarło do serwera, np. przez blokadę sieci albo wyłączony serwer.</td></tr>
   </table>
 </section>

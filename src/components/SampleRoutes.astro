@@ -1,0 +1,614 @@
+---
+import { sampleRoutes, type RouteStop } from "../data/routes";
+import { logoMark } from "../data/logo-mark";
+
+const mapWidth = 600;
+const mapHeight = 460;
+const mapPadding = 72;
+
+type Point = { x: number; y: number };
+
+const projectRoute = (stops: RouteStop[]) => {
+  const latitudes = stops.map((stop) => stop.lat);
+  const longitudes = stops.map((stop) => stop.lon);
+  const latMin = Math.min(...latitudes);
+  const latMax = Math.max(...latitudes);
+  const lonMin = Math.min(...longitudes);
+  const lonMax = Math.max(...longitudes);
+  const lonFactor = Math.cos((((latMin + latMax) / 2) * Math.PI) / 180);
+  const spanX = (lonMax - lonMin) * lonFactor;
+  const spanY = latMax - latMin;
+  const scale = Math.min((mapWidth - mapPadding * 2) / spanX, (mapHeight - mapPadding * 2) / spanY);
+  const offsetX = (mapWidth - spanX * scale) / 2;
+  const offsetY = (mapHeight - spanY * scale) / 2;
+  const toPoint = (lat: number, lon: number): Point => ({
+    x: offsetX + (lon - lonMin) * lonFactor * scale,
+    y: offsetY + (latMax - lat) * scale,
+  });
+  const gridStep = spanY > 0.5 ? 0.2 : 0.1;
+  const latLines: { y: number; label: string }[] = [];
+  for (let lat = Math.ceil((latMin - 0.3) / gridStep) * gridStep; lat <= latMax + 0.3; lat += gridStep) {
+    latLines.push({ y: toPoint(lat, lonMin).y, label: `${lat.toFixed(1).replace(".", ",")}° N` });
+  }
+  const lonLines: { x: number; label: string }[] = [];
+  for (let lon = Math.ceil((lonMin - 0.4) / gridStep) * gridStep; lon <= lonMax + 0.4; lon += gridStep) {
+    lonLines.push({ x: toPoint(latMin, lon).x, label: `${lon.toFixed(1).replace(".", ",")}° E` });
+  }
+  return { toPoint, latLines, lonLines };
+};
+
+const labelPlacement = (side: RouteStop["labelSide"] = "right") =>
+  ({
+    left: { x: -14, y: 4, "text-anchor": "end" },
+    right: { x: 14, y: 4, "text-anchor": "start" },
+    above: { x: 0, y: -18, "text-anchor": "middle" },
+    below: { x: 0, y: 28, "text-anchor": "middle" },
+  })[side];
+
+const legCurves = (points: Point[]) =>
+  points.slice(0, -1).map((start, index) => {
+    const end = points[index + 1];
+    const before = points[index - 1] ?? start;
+    const after = points[index + 2] ?? end;
+    const tension = 0.18;
+    const control1 = { x: start.x + (end.x - before.x) * tension, y: start.y + (end.y - before.y) * tension };
+    const control2 = { x: end.x - (after.x - start.x) * tension, y: end.y - (after.y - start.y) * tension };
+    const sameSpot = Math.hypot(end.x - start.x, end.y - start.y) < 1;
+    if (sameSpot) return `M${start.x} ${start.y}`;
+    return `M${start.x.toFixed(1)} ${start.y.toFixed(1)} C${control1.x.toFixed(1)} ${control1.y.toFixed(1)} ${control2.x.toFixed(1)} ${control2.y.toFixed(1)} ${end.x.toFixed(1)} ${end.y.toFixed(1)}`;
+  });
+
+const routes = sampleRoutes.map((route) => {
+  const { toPoint, latLines, lonLines } = projectRoute(route.stops);
+  const points = route.stops.map((stop) => toPoint(stop.lat, stop.lon));
+  const legPaths = legCurves(points);
+  const fullPath = legPaths.map((leg, index) => (index === 0 ? leg : leg.replace(/^M[^C]+/, ""))).join(" ");
+  const uniqueStops = route.stops
+    .map((stop, index) => ({ ...stop, point: points[index], order: index }))
+    .filter((stop, index, all) => all.findIndex((other) => other.name === stop.name) === index);
+  return { ...route, latLines, lonLines, legPaths, fullPath, uniqueStops, home: route.stops[0].name };
+});
+---
+
+<section class="routes" id="trasy" aria-labelledby="routes-title" data-routes>
+  <div class="routes__inner">
+    <header class="routes__head">
+      <p class="label">Przykładowe trasy</p>
+      <h2 id="routes-title" class="section-title">Tydzień na wodzie,<br />dzień po dniu</h2>
+      <p class="section-lead routes__lead">
+        Cztery pętle, od których zaczynamy planowanie. Każdą dopasujemy do pogody, tempa i Twojej załogi.
+      </p>
+    </header>
+
+    <div class="routes__tabs" role="tablist" aria-label="Akwen trasy">
+      {routes.map((route, index) => (
+        <button
+          class="routes__tab"
+          type="button"
+          role="tab"
+          id={`tab-${route.slug}`}
+          aria-controls={`panel-${route.slug}`}
+          aria-selected={index === 0 ? "true" : "false"}
+          tabindex={index === 0 ? 0 : -1}
+          data-route-tab
+        >
+          <span class="routes__tab-name">{route.tab}</span>
+          <span class="routes__tab-meta">{route.nights} nocy</span>
+        </button>
+      ))}
+    </div>
+
+    {routes.map((route, index) => (
+      <div
+        class="route"
+        role="tabpanel"
+        id={`panel-${route.slug}`}
+        aria-labelledby={`tab-${route.slug}`}
+        hidden={index !== 0}
+        data-route-panel
+      >
+        <figure class="route__map">
+          <svg viewBox={`0 0 ${mapWidth} ${mapHeight}`} role="img" aria-label={`Schemat trasy: ${route.stops.map((stop) => stop.name).join(", ")}`}>
+            <g class="route__grid">
+              {route.latLines.map((line) => (
+                <g>
+                  <line x1="0" x2={mapWidth} y1={line.y} y2={line.y} />
+                  {line.y > 32 && line.y < mapHeight - 40 && <text x="8" y={line.y - 6}>{line.label}</text>}
+                </g>
+              ))}
+              {route.lonLines.map((line, lineIndex) => (
+                <g>
+                  <line x1={line.x} x2={line.x} y1="0" y2={mapHeight} />
+                  {lineIndex % 2 === 0 && line.x > 0 && line.x < mapWidth - 72 && <text x={line.x + 6} y={mapHeight - 10}>{line.label}</text>}
+                </g>
+              ))}
+            </g>
+            <g class="route__compass" transform={`translate(${mapWidth - 52} 52)`}>
+              <circle r="26" />
+              <circle r="19" />
+              <path d="M0 -24 L5 0 L0 24 L-5 0 Z" />
+              <path class="route__compass-north" d="M0 -24 L5 0 L-5 0 Z" />
+              <text y="-32">N</text>
+            </g>
+            <path class="route__trail-base" d={route.fullPath} />
+            <path class="route__trail" d={route.fullPath} data-route-trail />
+            {route.legPaths.map((leg, legIndex) => (
+              <path class="route__leg" d={leg} data-route-leg={legIndex} />
+            ))}
+            {route.uniqueStops.map((stop) => (
+              <g
+                class:list={["route__stop", { "route__stop--home": stop.name === route.home }]}
+                transform={`translate(${stop.point.x.toFixed(1)} ${stop.point.y.toFixed(1)})`}
+                data-route-stop={stop.name}
+              >
+                <circle class="route__stop-ring" r="9" />
+                <circle class="route__stop-dot" r="4" />
+                <text {...labelPlacement(stop.labelSide)}>
+                  {stop.name}
+                </text>
+              </g>
+            ))}
+            <g class="route__boat" data-route-boat>
+              <g transform="scale(1.4) translate(-18 -18.2)">
+                <path d={logoMark.hull} />
+                <path d={logoMark.sail} />
+              </g>
+            </g>
+          </svg>
+          <figcaption class="route__caption">Schemat trasy, nie mapa nawigacyjna.</figcaption>
+        </figure>
+
+        <div class="route__plan">
+          <h3 class="route__title">{route.title}</h3>
+          <p class="route__meta">{route.nights} nocy · start i meta: {route.home}</p>
+          <ol class="route__legs">
+            {route.legs.map((leg, legIndex) => (
+              <li class="route__day" tabindex="0" data-route-day={legIndex} data-from={leg.from} data-to={leg.to}>
+                <span class="route__day-number">Dzień {legIndex + 1}</span>
+                <span class="route__day-path">{leg.from} → {leg.to}</span>
+                <span class="route__day-text">{leg.text}</span>
+              </li>
+            ))}
+          </ol>
+          <a class="button route__cta" href={`/?akwen=${route.destination}&trasa=${route.slug}#zapytanie`}>
+            Zapytaj o tę trasę
+            <span class="button__arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  import { gsap, ScrollTrigger, prefersReducedMotion } from "../scripts/motion";
+
+  const section = document.querySelector<HTMLElement>("[data-routes]");
+  const tabs = section ? [...section.querySelectorAll<HTMLButtonElement>("[data-route-tab]")] : [];
+  const panels = section ? [...section.querySelectorAll<HTMLElement>("[data-route-panel]")] : [];
+  let hasEntered = false;
+
+  const drawRoute = (panel: HTMLElement) => {
+    const trail = panel.querySelector<SVGPathElement>("[data-route-trail]");
+    const boat = panel.querySelector<SVGGElement>("[data-route-boat]");
+    if (!trail || !boat) return;
+    const length = trail.getTotalLength();
+    trail.style.strokeDasharray = String(length);
+    const placeBoat = (drawn: number) => {
+      const point = trail.getPointAtLength(drawn);
+      boat.setAttribute("transform", `translate(${point.x} ${point.y})`);
+    };
+    if (prefersReducedMotion()) {
+      trail.style.strokeDashoffset = "0";
+      boat.style.opacity = "0";
+      return;
+    }
+    const state = { drawn: 0 };
+    gsap.killTweensOf(state);
+    boat.style.opacity = "1";
+    gsap.to(state, {
+      drawn: length,
+      duration: 3.2,
+      ease: "power1.inOut",
+      onUpdate: () => {
+        trail.style.strokeDashoffset = String(length - state.drawn);
+        placeBoat(state.drawn);
+      },
+      onComplete: () => {
+        boat.style.opacity = "0";
+      },
+    });
+  };
+
+  const selectTab = (nextTab: HTMLButtonElement, moveFocus = false) => {
+    tabs.forEach((tab, index) => {
+      const isActive = tab === nextTab;
+      tab.setAttribute("aria-selected", String(isActive));
+      tab.tabIndex = isActive ? 0 : -1;
+      panels[index].hidden = !isActive;
+      if (isActive && hasEntered) drawRoute(panels[index]);
+    });
+    if (moveFocus) nextTab.focus();
+  };
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => selectTab(tab));
+    tab.addEventListener("keydown", (event) => {
+      const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (event.key === "Home") selectTab(tabs[0], true);
+      if (event.key === "End") selectTab(tabs[tabs.length - 1], true);
+      if (step) selectTab(tabs[(index + step + tabs.length) % tabs.length], true);
+    });
+  });
+
+  panels.forEach((panel) => {
+    const highlight = (day: HTMLElement | null) => {
+      panel.querySelectorAll("[data-route-leg]").forEach((leg) => leg.classList.toggle("is-active", leg.getAttribute("data-route-leg") === day?.dataset.routeDay));
+      panel.querySelectorAll<SVGGElement>("[data-route-stop]").forEach((stop) => {
+        const name = stop.dataset.routeStop;
+        stop.classList.toggle("is-active", Boolean(day) && (name === day?.dataset.from || name === day?.dataset.to));
+      });
+      panel.classList.toggle("is-highlighting", Boolean(day));
+    };
+    panel.querySelectorAll<HTMLElement>("[data-route-day]").forEach((day) => {
+      day.addEventListener("pointerenter", () => highlight(day));
+      day.addEventListener("focus", () => highlight(day));
+      day.addEventListener("pointerleave", () => highlight(null));
+      day.addEventListener("blur", () => highlight(null));
+    });
+  });
+
+  if (section && panels.length) {
+    panels.forEach((panel) => {
+      const trail = panel.querySelector<SVGPathElement>("[data-route-trail]");
+      if (trail) trail.style.strokeDasharray = trail.style.strokeDashoffset = String(trail.getTotalLength());
+    });
+    ScrollTrigger.create({
+      trigger: section.querySelector(".route__map") ?? section,
+      start: "top 70%",
+      once: true,
+      onEnter: () => {
+        hasEntered = true;
+        const active = panels.find((panel) => !panel.hidden);
+        if (active) drawRoute(active);
+      },
+    });
+  }
+</script>
+
+<style>
+  .routes {
+    position: relative;
+    background: var(--surface-deep);
+    color: var(--text-on-deep);
+    padding: var(--space-9) var(--gutter);
+  }
+
+  .routes__inner {
+    max-width: var(--page-max);
+    margin: 0 auto;
+  }
+
+  .routes__head {
+    display: grid;
+    gap: var(--space-5);
+    margin-bottom: var(--space-7);
+  }
+
+  .routes__head .label {
+    color: var(--text-on-deep-muted);
+  }
+
+  .routes__lead {
+    color: var(--text-on-deep-muted);
+  }
+
+  .routes__tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+    margin-bottom: var(--space-7);
+  }
+
+  .routes__tab {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-1);
+    min-height: var(--hit-target);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line-on-deep);
+    border-radius: var(--radius-sm);
+    text-align: left;
+    transition:
+      border-color var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .routes__tab-name {
+    font-family: var(--font-display);
+    font-size: var(--size-h4);
+    letter-spacing: var(--tracking-display-caps);
+    text-transform: uppercase;
+  }
+
+  .routes__tab-meta {
+    font-size: var(--size-label);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--text-on-deep-muted);
+  }
+
+  .routes__tab[aria-selected="true"] {
+    border-color: var(--color-brass-300);
+    background: var(--color-navy-700);
+  }
+
+  .route {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  .route[hidden] {
+    display: none;
+  }
+
+  .route__map {
+    margin: 0;
+  }
+
+  .route__map svg {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line-on-deep);
+    border-radius: var(--radius-md);
+    background: var(--color-navy-950);
+  }
+
+  .route__grid line {
+    stroke: var(--line-on-deep);
+    stroke-width: 0.6;
+    stroke-dasharray: 2 6;
+  }
+
+  .route__grid text {
+    fill: var(--text-on-deep-muted);
+    font-family: var(--font-body);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+  }
+
+  .route__compass circle {
+    fill: none;
+    stroke: var(--line-on-deep);
+    stroke-width: 0.8;
+  }
+
+  .route__compass path {
+    fill: none;
+    stroke: var(--color-brass-300);
+    stroke-width: 0.8;
+  }
+
+  .route__compass .route__compass-north {
+    fill: var(--color-brass-300);
+  }
+
+  .route__compass text {
+    fill: var(--color-brass-300);
+    font-family: var(--font-display);
+    font-size: 11px;
+    text-anchor: middle;
+  }
+
+  .route__trail-base {
+    fill: none;
+    stroke: var(--line-on-deep);
+    stroke-width: 1;
+    stroke-dasharray: 3 5;
+  }
+
+  .route__trail {
+    fill: none;
+    stroke: var(--color-brass-300);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+
+  .route__leg {
+    fill: none;
+    stroke: var(--text-on-deep);
+    stroke-width: 3;
+    stroke-linecap: round;
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .route__leg.is-active {
+    opacity: 1;
+  }
+
+  .route__stop-ring {
+    fill: var(--color-navy-950);
+    stroke: var(--color-brass-300);
+    stroke-width: 1;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+
+  .route__stop-dot {
+    fill: var(--color-brass-300);
+  }
+
+  .route__stop--home .route__stop-dot {
+    fill: var(--text-on-deep);
+  }
+
+  .route__stop text {
+    fill: var(--text-on-deep);
+    font-family: var(--font-display);
+    font-size: 20px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    paint-order: stroke;
+    stroke: var(--color-navy-950);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+  }
+
+  .is-highlighting .route__stop:not(.is-active) {
+    opacity: 0.45;
+  }
+
+  .route__stop.is-active .route__stop-ring {
+    transform: scale(1.4);
+  }
+
+  .route__stop {
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  .route__boat {
+    fill: var(--text-on-deep);
+    opacity: 0;
+    transition: opacity var(--duration-base) var(--ease-out);
+  }
+
+  .route__caption {
+    margin-top: var(--space-3);
+    font-size: var(--size-label);
+    color: var(--text-on-deep-muted);
+  }
+
+  .route__plan {
+    display: grid;
+    align-content: start;
+    gap: var(--space-4);
+  }
+
+  .route__title {
+    font-family: var(--font-display);
+    font-size: var(--size-h3);
+    font-weight: var(--weight-light);
+    line-height: var(--leading-heading);
+    letter-spacing: -0.02em;
+  }
+
+  .route__meta {
+    font-size: var(--size-label);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-brass-300);
+  }
+
+  .route__legs {
+    display: grid;
+    margin: 0 0 var(--space-3);
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line-on-deep);
+  }
+
+  .route__day {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    column-gap: var(--space-4);
+    padding: var(--space-3) var(--space-2);
+    border-bottom: 1px solid var(--line-on-deep);
+    border-radius: var(--radius-sm);
+    outline-offset: -2px;
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+
+  .route__day:hover,
+  .route__day:focus-visible {
+    background: var(--color-navy-700);
+  }
+
+  .route__day-number {
+    grid-row: span 2;
+    font-size: var(--size-label);
+    font-weight: var(--weight-medium);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-brass-300);
+    padding-top: 3px;
+  }
+
+  .route__day-path {
+    font-weight: var(--weight-medium);
+  }
+
+  .route__day-text {
+    font-size: var(--size-small);
+    color: var(--text-on-deep-muted);
+  }
+
+  .route__cta {
+    justify-self: start;
+    background: var(--text-on-deep);
+    border-color: var(--text-on-deep);
+    color: var(--text-strong);
+  }
+
+  @media (hover: hover) {
+    .routes__tab:hover {
+      border-color: color-mix(in srgb, var(--text-on-deep) 60%, transparent);
+    }
+
+    .route__cta:hover {
+      background: var(--color-sand-200);
+      border-color: var(--color-sand-200);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .routes__tabs {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .route__stop text {
+      font-size: 13px;
+    }
+
+    .route__grid text {
+      font-size: 10px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .routes {
+      padding-block: var(--space-10);
+    }
+
+    .routes__head {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+      align-items: end;
+      margin-bottom: var(--space-8);
+    }
+
+    .routes__head .label {
+      grid-column: 1 / -1;
+    }
+
+    .routes__head .section-title {
+      grid-column: 1 / span 7;
+    }
+
+    .routes__lead {
+      grid-column: 9 / span 4;
+    }
+
+    .route {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--space-5);
+    }
+
+    .route__map {
+      grid-column: 1 / span 7;
+    }
+
+    .route__plan {
+      grid-column: 8 / span 5;
+    }
+  }
+</style>

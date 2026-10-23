@@ -1,22 +1,5 @@
 ---
-const steps = [
-  {
-    title: "Opowiedz o rejsie",
-    text: "Wypełniasz krótki formularz: akwen, termin, liczba osób i rodzaj rejsu. Wystarczy szkic, resztę dopytamy.",
-  },
-  {
-    title: "Rozmowa z brokerem",
-    text: "Twój broker oddzwania, poznaje załogę i oczekiwania. Od tej chwili rozmawiasz z jedną osobą.",
-  },
-  {
-    title: "Wybrane jachty i trasa",
-    text: "Dostajesz krótką listę sprawdzonych jachtów z propozycją trasy, załogi i dodatków. Zmieniamy, aż wszystko pasuje.",
-  },
-  {
-    title: "Rezerwacja i wypłynięcie",
-    text: "Podpisujesz umowę, my zajmujemy się dokumentami, odprawą i zaopatrzeniem. Ty pakujesz tylko torbę.",
-  },
-];
+import { processSteps as steps } from "../data/offer";
 ---
 
 <section class="process" id="jak-to-dziala" aria-labelledby="process-title" data-process>
@@ -96,7 +79,7 @@ const steps = [
 <style>
   .process {
     position: relative;
-    background: var(--surface-page);
+    background: var(--surface-raised);
     padding: var(--space-9) var(--gutter);
   }
 
@@ -172,7 +155,7 @@ const steps = [
     height: var(--marker-size);
     border: 1px solid var(--line-soft);
     border-radius: 50%;
-    background: var(--surface-page);
+    background: var(--surface-raised);
     transition: border-color var(--duration-base) var(--ease-out);
   }
 

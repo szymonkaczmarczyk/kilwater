@@ -21,10 +21,13 @@ Usługodawcą jest Kilwater Sp. z o.o. z siedzibą w Warszawie, ul. Przykładowa
 
 ## Usługi w serwisie
 
-Usługodawca świadczy w Serwisie bezpłatnie dwie usługi:
+Usługodawca świadczy w Serwisie bezpłatnie trzy usługi:
 
 - udostępnianie treści Serwisu, w tym informacji o akwenach, rodzajach rejsów, załodze i dodatkach,
-- przyjmowanie zapytań o rejs wysłanych przez Formularz.
+- przyjmowanie zapytań o rejs wysłanych przez Formularz,
+- odpowiadanie na pytania o rejsy przez automatycznego asystenta w sekcji „Pytania przed rejsem”.
+
+Asystent działa na serwerze Usługodawcy i automatycznie dobiera do pytania odpowiedź z bazy przygotowanej przez Usługodawcę. Odpowiedzi mają charakter wyłącznie informacyjny i mogą nie pasować dokładnie do pytania. Nie są ofertą, rezerwacją ani wiążącą informacją o cenie, dostępności jachtu czy wymaganiach prawnych. Asystent odpowiada tylko na pytania związane z czarterem jachtów i rejsami, a gdy nie zna odpowiedzi, wskazuje kontakt e-mailowy. Usługodawca może ograniczyć liczbę pytań zadawanych w określonym czasie.
 
 Wysłanie zapytania nie jest zawarciem umowy czarteru ani rezerwacją jachtu. Odpowiedź Usługodawcy z propozycją rejsu nie jest ofertą w rozumieniu Kodeksu cywilnego, chyba że wyraźnie tak ją oznaczono. Umowa czarteru jest zawierana odrębnie, na warunkach przekazanych Użytkownikowi przed jej zawarciem.
 
@@ -42,6 +45,7 @@ Użytkownik zobowiązuje się:
 
 - podawać w Formularzu prawdziwe dane,
 - nie przesyłać treści bezprawnych, obraźliwych ani naruszających prawa innych osób,
+- nie wpisywać w pytaniach do asystenta danych osobowych ani treści niezwiązanych z rejsami,
 - nie podejmować działań, które zakłócają działanie Serwisu, w tym nie wysyłać zapytań automatycznie i masowo.
 
 ## Zawarcie i rozwiązanie umowy o świadczenie usług
